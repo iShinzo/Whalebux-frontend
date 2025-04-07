@@ -1,7 +1,12 @@
 "use client"
 
 // API service for interacting with the backend
-const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL || "https://whalebux-backend.onrender.com/api"
+const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL || "https://whalebux-vercel.onrender.com/api"
+
+// Log the API URL on startup
+if (typeof window !== "undefined") {
+  console.log("API_BASE_URL:", API_BASE_URL)
+}
 
 // Add connection status monitoring
 let isBackendAvailable = true
@@ -9,11 +14,22 @@ let isBackendAvailable = true
 // Helper function to check if backend is available
 const checkBackendAvailability = async () => {
   try {
-    const response = await fetch(`${API_BASE_URL.replace(/\/api$/, "")}/health`, {
+    const healthUrl = `${API_BASE_URL.replace(/\/api$/, "")}/health`
+    console.log("Checking backend health at:", healthUrl)
+
+    const response = await fetch(healthUrl, {
       method: "GET",
       headers: { "Content-Type": "application/json" },
       cache: "no-store",
     })
+
+    console.log("Health check response:", response.status, response.statusText)
+
+    if (response.ok) {
+      const data = await response.json()
+      console.log("Health check data:", data)
+    }
+
     isBackendAvailable = response.ok
     return isBackendAvailable
   } catch (error) {
@@ -107,16 +123,23 @@ export const userApi = {
         await checkBackendAvailability()
       }
 
-      const response = await fetch(`${API_BASE_URL}/users/${telegramId}`, {
+      const url = `${API_BASE_URL}/users/${telegramId}`
+      console.log("Fetching user data from:", url)
+
+      const response = await fetch(url, {
         headers: { "Content-Type": "application/json" },
         cache: "no-store",
       })
 
+      console.log("User data response:", response.status, response.statusText)
+
       if (!response.ok) {
-        throw new Error(`Failed to fetch user data: ${response.statusText}`)
+        throw new Error(`Failed to fetch user data: ${response.status} ${response.statusText}`)
       }
 
-      return await response.json()
+      const userData = await response.json()
+      console.log("User data received:", userData)
+      return userData
     } catch (error) {
       console.error("Error fetching user data:", error)
       throw error

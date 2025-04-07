@@ -64,12 +64,12 @@
     "vue": "latest",
     "vue-router": "latest",
     "@vercel/analytics": "latest",
-    "mongoose": "latest",
     "dotenv": "latest",
+    "mongoose": "latest",
     "express": "latest",
+    "uuid": "latest",
     "cors": "latest",
-    "morgan": "latest",
-    "uuid": "latest"
+    "morgan": "latest"
   },
   "devDependencies": {
     "@types/node": "^22",
