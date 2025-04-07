@@ -5,7 +5,7 @@ import { useTelegramWebApp } from "../../lib/telegram-init"
 import { userApi, taskApi } from "../../lib/api-service"
 
 export const Dashboard = () => {
-  const { webApp, user, loading } = useTelegramWebApp()
+  const { webApp, user, loading, error } = useTelegramWebApp()
   const [tasks, setTasks] = useState([])
   const [loadingTasks, setLoadingTasks] = useState(true)
 
@@ -34,12 +34,21 @@ export const Dashboard = () => {
     )
   }
 
-  // If no user found, show error
-  if (!user) {
+  // If error or no user found, show error
+  if (error || !user) {
     return (
       <div className="flex flex-col items-center justify-center min-h-screen p-4">
         <h1 className="text-3xl font-bold text-white mb-4">Error</h1>
-        <p className="text-white mb-4">Could not authenticate with Telegram. Please try again.</p>
+        <p className="text-white mb-4">{error || "Could not authenticate with Telegram. Please try again."}</p>
+        <div className="bg-gray-800 rounded-lg p-4 w-full max-w-md mb-4">
+          <h2 className="text-xl font-bold text-white mb-2">Debug Information</h2>
+          <p className="text-gray-400 text-sm">API URL: {process.env.NEXT_PUBLIC_API_URL || "Not set"}</p>
+          <p className="text-gray-400 text-sm">Environment: {process.env.NODE_ENV}</p>
+          <p className="text-gray-400 text-sm">Telegram WebApp: {webApp ? "Available" : "Not Available"}</p>
+        </div>
+        <a href="/test" className="mt-4 px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700">
+          Go to Test Mode
+        </a>
       </div>
     )
   }
