@@ -15,11 +15,21 @@ const PORT = process.env.PORT || 3001
 // Improved CORS configuration
 app.use(
   cors({
-    origin: ["https://whalebux-frontend.vercel.app", "https://telegram.org", "http://localhost:3000"],
+    origin: [
+      "https://whalebux-frontend.vercel.app",
+      "https://telegram.org", 
+      "https://t.me",
+      "https://web.telegram.org",
+      "http://localhost:3000"
+    ],
     methods: ["GET", "POST", "PATCH", "DELETE", "OPTIONS"],
     credentials: true,
+    allowedHeaders: ["Content-Type", "Authorization", "x-admin-key"]
   }),
 )
+
+// Handle preflight requests
+app.options('*', cors());
 
 app.use(express.json())
 app.use(morgan("dev"))
