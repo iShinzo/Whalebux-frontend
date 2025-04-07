@@ -20,7 +20,7 @@ app.use(
       "https://telegram.org", 
       "https://t.me",
       "https://web.telegram.org",
-      "http://localhost:3001"
+      "http://localhost:3000"
     ],
     methods: ["GET", "POST", "PATCH", "DELETE", "OPTIONS"],
     credentials: true,
