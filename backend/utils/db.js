@@ -47,4 +47,3 @@ const checkConnection = () => {
 }
 
 module.exports = { connectDB, checkConnection }
-

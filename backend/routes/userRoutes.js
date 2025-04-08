@@ -15,4 +15,3 @@ router.post("/", userController.createUser)
 router.patch("/:telegramId", userController.updateUser)
 
 module.exports = router
-

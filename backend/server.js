@@ -7,29 +7,27 @@ const mongoose = require("mongoose")
 // Import routes
 const userRoutes = require("./routes/userRoutes")
 const taskRoutes = require("./routes/taskRoutes")
+const corsTestRoute = require("./routes/corsTestRoute")
 
 // Initialize express app
 const app = express()
 const PORT = process.env.PORT || 3001
 
-// Improved CORS configuration
-app.use(
-  cors({
-    origin: [
-      "https://whalebux-frontend.vercel.app",
-      "https://telegram.org", 
-      "https://t.me",
-      "https://web.telegram.org",
-      "http://localhost:3000"
-    ],
-    methods: ["GET", "POST", "PATCH", "DELETE", "OPTIONS"],
-    credentials: true,
-    allowedHeaders: ["Content-Type", "Authorization", "x-admin-key"]
-  }),
-)
+// CORS configuration - FIXED VERSION
+app.use(cors({
+  origin: '*', // Allow all origins temporarily for debugging
+  methods: ['GET', 'POST', 'PATCH', 'DELETE', 'OPTIONS'],
+  allowedHeaders: ['Content-Type', 'Authorization', 'x-admin-key'],
+  credentials: true
+}));
 
-// Handle preflight requests
-app.options('*', cors());
+// Handle preflight requests explicitly
+app.options('*', (req, res) => {
+  res.header('Access-Control-Allow-Origin', '*');
+  res.header('Access-Control-Allow-Methods', 'GET, POST, PATCH, DELETE, OPTIONS');
+  res.header('Access-Control-Allow-Headers', 'Content-Type, Authorization, x-admin-key');
+  res.status(200).send();
+});
 
 app.use(express.json())
 app.use(morgan("dev"))
@@ -61,9 +59,18 @@ mongoose
     console.error(`Attempted to connect with: ${sanitizedUri}`)
   })
 
+// Add CORS headers to all responses
+app.use((req, res, next) => {
+  res.header('Access-Control-Allow-Origin', '*');
+  res.header('Access-Control-Allow-Methods', 'GET, POST, PATCH, DELETE, OPTIONS');
+  res.header('Access-Control-Allow-Headers', 'Content-Type, Authorization, x-admin-key');
+  next();
+});
+
 // Routes
 app.use("/api/users", userRoutes)
 app.use("/api/tasks", taskRoutes)
+app.use("/cors", corsTestRoute)
 
 // Root route for health check
 app.get("/", (req, res) => {
@@ -100,4 +107,3 @@ app.get("/health", (req, res) => {
 app.listen(PORT, () => {
   console.log(`Server running on port ${PORT}`)
 })
-

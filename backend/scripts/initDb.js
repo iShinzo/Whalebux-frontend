@@ -69,4 +69,3 @@ const initDb = async () => {
 }
 
 initDb()
-

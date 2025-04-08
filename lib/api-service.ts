@@ -1,7 +1,7 @@
 "use client"
 
 // API service for interacting with the backend
-const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL || "https://whalebux-vercel.onrender.com/api"
+const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL || "https://whalebux-backend.onrender.com/api"
 
 // Log the API URL on startup
 if (typeof window !== "undefined") {
@@ -21,6 +21,7 @@ const checkBackendAvailability = async () => {
       method: "GET",
       headers: { "Content-Type": "application/json" },
       cache: "no-store",
+      mode: "cors", // Explicitly set CORS mode
     })
 
     console.log("Health check response:", response.status, response.statusText)
@@ -39,11 +40,41 @@ const checkBackendAvailability = async () => {
   }
 }
 
-// Check backend availability on startup
+// Add this function to test CORS
+const testCors = async () => {
+  try {
+    console.log("Testing CORS with backend...")
+    const response = await fetch(`${API_BASE_URL.replace(/\/api$/, "")}/cors/test`, {
+      method: "GET",
+      headers: { "Content-Type": "application/json" },
+      mode: "cors", // Explicitly set CORS mode
+    })
+    
+    console.log("CORS test response status:", response.status)
+    
+    if (response.ok) {
+      const data = await response.json()
+      console.log("CORS test successful:", data)
+      return true
+    } else {
+      console.error("CORS test failed:", response.statusText)
+      return false
+    }
+  } catch (error) {
+    console.error("CORS test error:", error)
+    return false
+  }
+}
+
+// Check backend availability and CORS on startup
 if (typeof window !== "undefined") {
   checkBackendAvailability()
     .then((available) => console.log(`Backend is ${available ? "available" : "unavailable"}`))
     .catch((err) => console.error("Error checking backend availability:", err))
+  
+  testCors()
+    .then(success => console.log(`CORS test ${success ? "passed" : "failed"}`))
+    .catch(err => console.error("Error during CORS test:", err))
 }
 
 // Types
@@ -129,6 +160,7 @@ export const userApi = {
       const response = await fetch(url, {
         headers: { "Content-Type": "application/json" },
         cache: "no-store",
+        mode: "cors", // Explicitly set CORS mode
       })
 
       console.log("User data response:", response.status, response.statusText)
@@ -154,20 +186,34 @@ export const userApi = {
         await checkBackendAvailability()
       }
 
+      console.log("Creating user with data:", userData);
+      console.log("API URL being used:", `${API_BASE_URL}/users`);
+      
       const response = await fetch(`${API_BASE_URL}/users`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify(userData),
+        mode: "cors", // Explicitly set CORS mode
       })
 
+      console.log("Create user response status:", response.status, response.statusText);
+      
       if (!response.ok) {
-        throw new Error(`Failed to create user: ${response.statusText}`)
+        const errorText = await response.text();
+        console.error("Error response body:", errorText);
+        throw new Error(`Failed to create user: ${response.status} ${response.statusText} - ${errorText}`);
       }
 
-      return await response.json()
+      const data = await response.json();
+      console.log("User created successfully:", data);
+      return data;
     } catch (error) {
-      console.error("Error creating user:", error)
-      throw error
+      console.error("Error creating user:", error);
+      if (error instanceof Error) {
+        console.error("Error message:", error.message);
+        console.error("Error stack:", error.stack);
+      }
+      throw error;
     }
   },
 
@@ -183,6 +229,7 @@ export const userApi = {
         method: "PATCH",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify(updates),
+        mode: "cors", // Explicitly set CORS mode
       })
 
       if (!response.ok) {
@@ -210,6 +257,7 @@ export const taskApi = {
       const response = await fetch(`${API_BASE_URL}/tasks?userId=${telegramId}`, {
         headers: { "Content-Type": "application/json" },
         cache: "no-store",
+        mode: "cors", // Explicitly set CORS mode
       })
 
       if (!response.ok) {
@@ -235,6 +283,7 @@ export const taskApi = {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ userId: telegramId }),
+        mode: "cors", // Explicitly set CORS mode
       })
 
       if (!response.ok) {
@@ -248,4 +297,3 @@ export const taskApi = {
     }
   },
 }
-

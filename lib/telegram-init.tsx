@@ -62,6 +62,13 @@ export function useTelegramWebApp() {
                 try {
                   // Create new user with Telegram data
                   console.log("Attempting to create user with telegramId:", telegramId);
+                  console.log("User data to be sent:", {
+                    telegramId: telegramId,
+                    username: initData.user.username || `user_${telegramId}`,
+                    firstName: initData.user.first_name || "",
+                    lastName: initData.user.last_name || "",
+                  });
+                  
                   const newUser = await userApi.createUser({
                     telegramId: telegramId,
                     username: initData.user.username || `user_${telegramId}`,
@@ -77,7 +84,7 @@ export function useTelegramWebApp() {
                   setError(`Failed to create user account: ${createError instanceof Error ? createError.message : String(createError)}`);
                 }
               } else {
-                setError("Failed to fetch user data")
+                setError(`Failed to fetch user data: ${error instanceof Error ? error.message : String(error)}`)
               }
             }
           } else {
@@ -104,4 +111,3 @@ export function useTelegramWebApp() {
 
   return { webApp, user, loading, error }
 }
-

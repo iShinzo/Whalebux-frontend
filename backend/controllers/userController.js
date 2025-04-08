@@ -129,4 +129,3 @@ exports.updateUser = async (req, res) => {
     res.status(500).json({ error: "Server error" })
   }
 }
-

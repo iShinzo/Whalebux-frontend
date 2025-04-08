@@ -31,4 +31,3 @@ Backend API for the WhaleBux Telegram Mini App.
    ```bash
    git clone https://github.com/yourusername/whalebux-backend.git
    cd whalebux-backend
-

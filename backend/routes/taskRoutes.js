@@ -15,4 +15,3 @@ router.post("/:taskId/complete", taskController.completeTask)
 router.delete("/:taskId", taskController.deleteTask)
 
 module.exports = router
-
