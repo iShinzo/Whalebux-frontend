@@ -1,7 +1,7 @@
 "use client"
 
 // API service for interacting with the backend
-const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL || "https://whalebux-backend.onrender.com"
+const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL || "https://whalebux-backend.onrender.com/api"
 
 // Log the API URL on startup
 if (typeof window !== "undefined") {
@@ -49,9 +49,9 @@ const testCors = async () => {
       headers: { "Content-Type": "application/json" },
       mode: "cors", // Explicitly set CORS mode
     })
-    
+
     console.log("CORS test response status:", response.status)
-    
+
     if (response.ok) {
       const data = await response.json()
       console.log("CORS test successful:", data)
@@ -71,10 +71,10 @@ if (typeof window !== "undefined") {
   checkBackendAvailability()
     .then((available) => console.log(`Backend is ${available ? "available" : "unavailable"}`))
     .catch((err) => console.error("Error checking backend availability:", err))
-  
+
   testCors()
-    .then(success => console.log(`CORS test ${success ? "passed" : "failed"}`))
-    .catch(err => console.error("Error during CORS test:", err))
+    .then((success) => console.log(`CORS test ${success ? "passed" : "failed"}`))
+    .catch((err) => console.error("Error during CORS test:", err))
 }
 
 // Types
@@ -119,6 +119,14 @@ interface Task {
   createdAt: string
   global: boolean // If true, available to all users
   completed?: boolean // Client-side property
+}
+
+interface Friend {
+  userId: string
+  telegramId: number
+  username?: string
+  firstName?: string
+  lastName?: string
 }
 
 const createDefaultUser = (telegramId: number): UserData => {
@@ -186,9 +194,9 @@ export const userApi = {
         await checkBackendAvailability()
       }
 
-      console.log("Creating user with data:", userData);
-      console.log("API URL being used:", `${API_BASE_URL}/users`);
-      
+      console.log("Creating user with data:", userData)
+      console.log("API URL being used:", `${API_BASE_URL}/users`)
+
       const response = await fetch(`${API_BASE_URL}/users`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
@@ -196,24 +204,24 @@ export const userApi = {
         mode: "cors", // Explicitly set CORS mode
       })
 
-      console.log("Create user response status:", response.status, response.statusText);
-      
+      console.log("Create user response status:", response.status, response.statusText)
+
       if (!response.ok) {
-        const errorText = await response.text();
-        console.error("Error response body:", errorText);
-        throw new Error(`Failed to create user: ${response.status} ${response.statusText} - ${errorText}`);
+        const errorText = await response.text()
+        console.error("Error response body:", errorText)
+        throw new Error(`Failed to create user: ${response.status} ${response.statusText} - ${errorText}`)
       }
 
-      const data = await response.json();
-      console.log("User created successfully:", data);
-      return data;
+      const data = await response.json()
+      console.log("User created successfully:", data)
+      return data
     } catch (error) {
-      console.error("Error creating user:", error);
+      console.error("Error creating user:", error)
       if (error instanceof Error) {
-        console.error("Error message:", error.message);
-        console.error("Error stack:", error.stack);
+        console.error("Error message:", error.message)
+        console.error("Error stack:", error.stack)
       }
-      throw error;
+      throw error
     }
   },
 
@@ -296,4 +304,64 @@ export const taskApi = {
       throw error
     }
   },
+}
+
+// Get referred friends
+export const getFriends = async (telegramId: number): Promise<Friend[]> => {
+  try {
+    const response = await fetch(`${API_BASE_URL}/users/${telegramId}/friends`, {
+      headers: { "Content-Type": "application/json" },
+      cache: "no-store",
+    })
+
+    if (!response.ok) {
+      throw new Error(`Failed to fetch friends: ${response.statusText}`)
+    }
+
+    return await response.json()
+  } catch (error) {
+    console.error("Error fetching friends:", error)
+    return []
+  }
+}
+
+// Check if a referral code is valid
+export const checkReferralCode = async (referralCode: string): Promise<boolean> => {
+  try {
+    const response = await fetch(`${API_BASE_URL}/referrals/check/${referralCode}`, {
+      headers: { "Content-Type": "application/json" },
+      cache: "no-store",
+    })
+
+    if (!response.ok) {
+      return false
+    }
+
+    const data = await response.json()
+    return data.valid
+  } catch (error) {
+    console.error("Error checking referral code:", error)
+    return false
+  }
+}
+
+// Apply a referral code
+export const applyReferralCode = async (telegramId: number, referralCode: string): Promise<boolean> => {
+  try {
+    const response = await fetch(`${API_BASE_URL}/referrals/apply`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ telegramId, referralCode }),
+    })
+
+    if (!response.ok) {
+      throw new Error(`Failed to apply referral code: ${response.statusText}`)
+    }
+
+    const data = await response.json()
+    return data.success
+  } catch (error) {
+    console.error("Error applying referral code:", error)
+    return false
+  }
 }

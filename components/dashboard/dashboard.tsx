@@ -3,15 +3,41 @@
 import { useEffect, useState } from "react"
 import { useTelegramWebApp } from "../../lib/telegram-init"
 import { userApi, taskApi } from "../../lib/api-service"
+import { useUserStore } from "../../lib/stores/userStore"
+import Link from "next/link"
 
 export const Dashboard = () => {
   const { webApp, user, loading, error } = useTelegramWebApp()
   const [tasks, setTasks] = useState([])
   const [loadingTasks, setLoadingTasks] = useState(true)
+  const setUser = useUserStore((state) => state.setUser)
+  const referralBoost = useUserStore((state) => state.referralBoost)
 
   useEffect(() => {
     // If we have a user, fetch their tasks
     if (user && user.telegramId) {
+      // Update the user store with the user data from the API
+      setUser({
+        userId: user.userId,
+        telegramId: user.telegramId,
+        username: user.username,
+        firstName: user.firstName,
+        lastName: user.lastName,
+        level: user.level,
+        experience: user.experience,
+        wbuxDollars: user.wbuxDollars,
+        wbuxBalance: user.wbuxBalance,
+        loginStreak: user.loginStreak,
+        referralCode: user.referralCode,
+        referralCount: user.referralCount,
+        lastLogin: user.lastLogin,
+        miningRateLevel: user.miningRateLevel,
+        miningBoostLevel: user.miningBoostLevel,
+        miningTimeLevel: user.miningTimeLevel,
+        nftSlotLevel: user.nftSlotLevel,
+        completedTasks: user.completedTasks || [],
+      })
+
       taskApi
         .getTasksForUser(user.telegramId)
         .then((tasks) => {
@@ -23,7 +49,7 @@ export const Dashboard = () => {
           setLoadingTasks(false)
         })
     }
-  }, [user])
+  }, [user, setUser])
 
   // If still loading, show loading spinner
   if (loading) {
@@ -64,6 +90,84 @@ export const Dashboard = () => {
         <p className="text-white">WhaleBux Dollars: {user.wbuxDollars}</p>
         <p className="text-white">WBUX Tokens: {user.wbuxBalance}</p>
         <p className="text-white">Referral Code: {user.referralCode}</p>
+
+        {/* Mining Section */}
+        <div className="mt-4 pt-4 border-t border-gray-700">
+          <div className="flex justify-between items-center">
+            <div>
+              <p className="text-white">Mining Center</p>
+              <p className="text-gray-400 text-sm">Earn WhaleBux Dollars by mining!</p>
+            </div>
+            <Link href="/mining" className="px-3 py-1 bg-green-600 text-white rounded hover:bg-green-700">
+              Start Mining
+            </Link>
+          </div>
+        </div>
+
+        {/* Daily Streak Section */}
+        <div className="mt-4 pt-4 border-t border-gray-700">
+          <div className="flex justify-between items-center">
+            <div>
+              <p className="text-white">Login Streak: {user.loginStreak} days</p>
+              <p className="text-gray-400 text-sm">Keep logging in daily for rewards!</p>
+            </div>
+            <Link href="/daily-streak" className="px-3 py-1 bg-blue-600 text-white rounded hover:bg-blue-700">
+              View Streak
+            </Link>
+          </div>
+        </div>
+
+        {/* Referrals Section */}
+        <div className="mt-4 pt-4 border-t border-gray-700">
+          <div className="flex justify-between items-center">
+            <div>
+              <p className="text-white">Referral Boost: +{referralBoost}%</p>
+              <p className="text-gray-400 text-sm">Invite friends to earn more!</p>
+            </div>
+            <Link href="/friends" className="px-3 py-1 bg-blue-600 text-white rounded hover:bg-blue-700">
+              Invite Friends
+            </Link>
+          </div>
+        </div>
+
+        {/* Task Marketplace Section */}
+        <div className="mt-4 pt-4 border-t border-gray-700">
+          <div className="flex justify-between items-center">
+            <div>
+              <p className="text-white">Task Marketplace</p>
+              <p className="text-gray-400 text-sm">Complete tasks to earn rewards!</p>
+            </div>
+            <Link href="/tasks" className="px-3 py-1 bg-blue-600 text-white rounded hover:bg-blue-700">
+              View Tasks
+            </Link>
+          </div>
+        </div>
+
+        {/* NFT Marketplace Section */}
+        <div className="mt-4 pt-4 border-t border-gray-700">
+          <div className="flex justify-between items-center">
+            <div>
+              <p className="text-white">NFT Marketplace</p>
+              <p className="text-gray-400 text-sm">Buy, sell, and activate NFT boosts!</p>
+            </div>
+            <Link href="/nft" className="px-3 py-1 bg-blue-600 text-white rounded hover:bg-blue-700">
+              View NFTs
+            </Link>
+          </div>
+        </div>
+
+        {/* Token Swap Section */}
+        <div className="mt-4 pt-4 border-t border-gray-700">
+          <div className="flex justify-between items-center">
+            <div>
+              <p className="text-white">Token Swap</p>
+              <p className="text-gray-400 text-sm">Convert Dollars to WBUX Tokens!</p>
+            </div>
+            <Link href="/swap" className="px-3 py-1 bg-blue-600 text-white rounded hover:bg-blue-700">
+              Swap Tokens
+            </Link>
+          </div>
+        </div>
       </div>
 
       {/* Tasks */}
@@ -102,10 +206,12 @@ export const Dashboard = () => {
 
                               // Update user data
                               userApi.getUserData(user.telegramId).then((updatedUser) => {
-                                // This will trigger a re-render with updated user data
-                                // You would need to implement a state management solution
-                                // to properly update the user data in the component
-                                console.log("Updated user data:", updatedUser)
+                                // Update the user store with the updated user data
+                                setUser({
+                                  wbuxDollars: updatedUser.wbuxDollars,
+                                  wbuxBalance: updatedUser.wbuxBalance,
+                                  completedTasks: updatedUser.completedTasks || [],
+                                })
                               })
                             }
                           })
