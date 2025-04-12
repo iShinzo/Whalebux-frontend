@@ -1,7 +1,7 @@
 "use client"
 
 // API service for interacting with the backend
-const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL || "https://whalebux-backend.onrender.com/api"
+const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL || "https://whalebux-vercel.onrender.com"
 
 // Log the API URL on startup
 if (typeof window !== "undefined") {
