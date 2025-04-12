@@ -12,7 +12,7 @@ export default function TestPage() {
   useEffect(() => {
     const checkApi = async () => {
       try {
-        const apiUrl = process.env.NEXT_PUBLIC_API_URL || "https://whalebux-vercel.onrender.com"
+        const apiUrl = process.env.NEXT_PUBLIC_API_URL || "https://whalebux-vercel.onrender.com/api"
         const response = await fetch(`${apiUrl.replace(/\/api$/, "")}/health`, {
           method: "GET",
           headers: { "Content-Type": "application/json" },
