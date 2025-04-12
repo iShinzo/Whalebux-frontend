@@ -12,7 +12,7 @@ export default function CorsTestPage() {
       try {
         setStatus("Testing CORS connection...")
         
-        const apiUrl = process.env.NEXT_PUBLIC_API_URL || "https://whalebux-backend.onrender.com"
+        const apiUrl = process.env.NEXT_PUBLIC_API_URL || "https://whalebux-vercel.onrender.com"
         const corsTestUrl = `${apiUrl.replace(/\/api$/, "")}/cors/test`
         
         console.log("Testing CORS with URL:", corsTestUrl)
