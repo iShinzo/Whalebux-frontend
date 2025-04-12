@@ -74,7 +74,7 @@ export default function CorsTestPage() {
         
         <div className="mt-4 text-gray-400 text-sm">
           <p>This page tests CORS connectivity with your backend.</p>
-          <p>API URL: {process.env.NEXT_PUBLIC_API_URL || "https://whalebux-backend.onrender.com/api"}</p>
+          <p>API URL: {process.env.NEXT_PUBLIC_API_URL || "https://whalebux-vercel.onrender.com"}</p>
         </div>
       </div>
     </div>
