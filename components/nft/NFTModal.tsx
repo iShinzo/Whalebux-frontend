@@ -1,6 +1,6 @@
 "use client"
 
-import { useState } from "react"
+import { useState, useCallback } from "react"
 import { useUserStore } from "../../lib/stores/userStore"
 import { useNFTStore, type NFT } from "../../lib/stores/nftStore"
 import { formatDistanceToNow } from "date-fns"
@@ -9,6 +9,29 @@ interface NFTModalProps {
   nft: NFT
   onClose: () => void
 }
+
+// Reusable Badge Component
+const Badge = ({ label, color }: { label: string; color: string }) => (
+  <div className={`px-3 py-1 text-sm font-bold rounded-full ${color}`}>{label}</div>
+)
+
+// Reusable Button Component
+const Button = ({
+  label,
+  onClick,
+  color,
+}: {
+  label: string
+  onClick: () => void
+  color: string
+}) => (
+  <button
+    onClick={onClick}
+    className={`flex-1 py-2 px-4 ${color} hover:opacity-90 text-white rounded-md`}
+  >
+    {label}
+  </button>
+)
 
 export default function NFTModal({ nft, onClose }: NFTModalProps) {
   const { userId, username } = useUserStore()
@@ -25,51 +48,86 @@ export default function NFTModal({ nft, onClose }: NFTModalProps) {
 
   const bids = getBidsForNFT(nft.id)
 
-  const handleActivate = () => {
+  const handleActivate = useCallback(() => {
     if (isOwner && !isActivated) {
       activateNFT(nft.id)
       onClose()
     }
-  }
+  }, [isOwner, isActivated, activateNFT, nft.id, onClose])
 
-  const handleDeactivate = () => {
+  const handleDeactivate = useCallback(() => {
     if (isOwner && isActivated) {
       deactivateNFT(nft.id)
       onClose()
     }
-  }
+  }, [isOwner, isActivated, deactivateNFT, nft.id, onClose])
 
-  const handleCancelSale = () => {
+  const handleCancelSale = useCallback(() => {
     if (isOwner && (isForSale || isAuction)) {
       cancelListing(nft.id)
       onClose()
     }
-  }
+  }, [isOwner, isForSale, isAuction, cancelListing, nft.id, onClose])
 
-  const handleBuy = () => {
+  const handleBuy = useCallback(() => {
     if (!isOwner && isForSale && userId && username) {
       buyNFT(nft.id, userId, username)
       onClose()
     }
-  }
+  }, [isOwner, isForSale, userId, username, buyNFT, nft.id, onClose])
 
-  const handlePlaceBid = () => {
+  const handlePlaceBid = useCallback(() => {
     if (!isOwner && isAuction && userId && username) {
       placeBid(nft.id, userId, username, bidAmount)
       setShowBidForm(false)
     }
+  }, [isOwner, isAuction, userId, username, placeBid, nft.id, bidAmount])
+
+  const renderStatusBadge = () => {
+    switch (nft.status) {
+      case "FOR_SALE":
+        return <Badge label="For Sale" color="bg-blue-900/70 text-blue-400" />
+      case "AUCTION":
+        return <Badge label="Auction" color="bg-purple-900/70 text-purple-400" />
+      case "ACTIVATED":
+        return <Badge label="Activated" color="bg-green-900/70 text-green-400" />
+      default:
+        return <Badge label="Owned" color="bg-gray-900/70 text-gray-400" />
+    }
   }
+
+  const renderBoostDetails = () => (
+    <div className="grid grid-cols-2 gap-4">
+      <DetailCard label="Boost Type" value={getBoostTypeLabel(nft.boost.type)} />
+      <DetailCard label="Boost Value" value={`+${nft.boost.value}%`} />
+      <DetailCard label="Duration" value={nft.boost.duration ? `${nft.boost.duration} days` : "Permanent"} />
+      <DetailCard label="Minted" value={`${formatDistanceToNow(new Date(nft.mintDate))} ago`} />
+    </div>
+  )
+
+  // Detail card for displaying NFT details
+  const DetailCard = ({ label, value }: { label: string; value: string }) => (
+    <div className="bg-gray-700 p-4 rounded-lg">
+      <div className="text-sm text-gray-400 mb-1">{label}:</div>
+      <div className="text-white">{value}</div>
+    </div>
+  )
 
   return (
     <div className="fixed inset-0 bg-black/80 flex items-center justify-center z-50 p-4">
       <div className="bg-gray-800 rounded-lg max-w-2xl w-full max-h-[90vh] overflow-auto">
+        {/* Modal Header */}
         <div className="relative">
           <img
             src={nft.image || "/placeholder.svg?height=400&width=400"}
             alt={nft.name}
             className="w-full h-64 object-cover"
           />
-          <button onClick={onClose} className="absolute top-2 right-2 bg-gray-900/80 text-white rounded-full p-2">
+          <button
+            onClick={onClose}
+            className="absolute top-2 right-2 bg-gray-900/80 text-white rounded-full p-2"
+            aria-label="Close Modal"
+          >
             <svg
               xmlns="http://www.w3.org/2000/svg"
               className="h-6 w-6"
@@ -82,7 +140,9 @@ export default function NFTModal({ nft, onClose }: NFTModalProps) {
           </button>
         </div>
 
+        {/* Modal Body */}
         <div className="p-6">
+          {/* NFT Info */}
           <div className="flex justify-between items-start mb-4">
             <div>
               <h2 className="text-2xl font-bold text-white">{nft.name}</h2>
@@ -90,94 +150,34 @@ export default function NFTModal({ nft, onClose }: NFTModalProps) {
                 {nft.type} • {nft.rarity} Rarity
               </p>
             </div>
-            <div
-              className={`px-3 py-1 text-sm font-bold rounded-full ${
-                nft.status === "FOR_SALE"
-                  ? "bg-blue-900/70 text-blue-400"
-                  : nft.status === "AUCTION"
-                    ? "bg-purple-900/70 text-purple-400"
-                    : nft.status === "ACTIVATED"
-                      ? "bg-green-900/70 text-green-400"
-                      : "bg-gray-900/70 text-gray-400"
-              }`}
-            >
-              {nft.status === "FOR_SALE"
-                ? "For Sale"
-                : nft.status === "AUCTION"
-                  ? "Auction"
-                  : nft.status === "ACTIVATED"
-                    ? "Activated"
-                    : "Owned"}
-            </div>
+            {renderStatusBadge()}
           </div>
 
           <p className="text-gray-300 mb-6">{nft.description}</p>
 
-          <div className="grid grid-cols-2 gap-4 mb-6">
-            <div className="bg-gray-700 p-4 rounded-lg">
-              <div className="text-sm text-gray-400 mb-1">Boost Type:</div>
-              <div className="text-white">
-                {nft.boost.type === "MINING_RATE"
-                  ? "Mining Rate"
-                  : nft.boost.type === "MINING_TIME"
-                    ? "Mining Time"
-                    : nft.boost.type === "REWARD_MULTIPLIER"
-                      ? "Reward Multiplier"
-                      : "Special"}
-              </div>
-            </div>
+          {/* Boost Details */}
+          {renderBoostDetails()}
 
-            <div className="bg-gray-700 p-4 rounded-lg">
-              <div className="text-sm text-gray-400 mb-1">Boost Value:</div>
-              <div className="text-white">+{nft.boost.value}%</div>
-            </div>
-
-            <div className="bg-gray-700 p-4 rounded-lg">
-              <div className="text-sm text-gray-400 mb-1">Duration:</div>
-              <div className="text-white">{nft.boost.duration ? `${nft.boost.duration} days` : "Permanent"}</div>
-            </div>
-
-            <div className="bg-gray-700 p-4 rounded-lg">
-              <div className="text-sm text-gray-400 mb-1">Minted:</div>
-              <div className="text-white">{formatDistanceToNow(new Date(nft.mintDate))} ago</div>
-            </div>
-          </div>
-
+          {/* For Sale Section */}
           {isForSale && (
-            <div className="mb-6 p-4 bg-gray-700 rounded-lg">
-              <div className="text-sm text-gray-400 mb-1">Price:</div>
-              <div className="text-2xl font-bold text-white">
-                {nft.price} {nft.priceType === "DOLLARS" ? "Dollars" : "WBUX"}
-              </div>
-              <div className="text-sm text-gray-400 mt-1">Seller: {nft.ownerName || "Unknown"}</div>
-            </div>
+            <DetailCard
+              label="Price"
+              value={`${nft.price} ${nft.priceType === "DOLLARS" ? "Dollars" : "WBUX"}`}
+            />
           )}
 
+          {/* Auction Section */}
           {isAuction && (
-            <div className="mb-6">
-              <div className="p-4 bg-gray-700 rounded-lg mb-4">
-                <div className="flex justify-between">
-                  <div>
-                    <div className="text-sm text-gray-400 mb-1">
-                      {nft.highestBid ? "Current Bid:" : "Starting Price:"}
-                    </div>
-                    <div className="text-2xl font-bold text-white">
-                      {nft.highestBid || nft.price} {nft.priceType === "DOLLARS" ? "Dollars" : "WBUX"}
-                    </div>
-                  </div>
-                  <div className="text-right">
-                    <div className="text-sm text-gray-400 mb-1">Auction Ends:</div>
-                    <div className="text-white">
-                      {nft.auctionEndTime ? formatDistanceToNow(new Date(nft.auctionEndTime)) : "Unknown"}
-                    </div>
-                  </div>
-                </div>
-                {nft.highestBidder && (
-                  <div className="text-sm text-gray-400 mt-2">Highest Bidder: {nft.highestBidderName || "Unknown"}</div>
-                )}
-              </div>
-
-              {showBidForm && !isOwner && (
+            <>
+              <DetailCard
+                label={nft.highestBid ? "Current Bid" : "Starting Price"}
+                value={`${nft.highestBid || nft.price} ${nft.priceType === "DOLLARS" ? "Dollars" : "WBUX"}`}
+              />
+              <DetailCard
+                label="Auction Ends"
+                value={nft.auctionEndTime ? formatDistanceToNow(new Date(nft.auctionEndTime)) : "Unknown"}
+              />
+              {showBidForm && (
                 <div className="p-4 bg-gray-700 rounded-lg mb-4">
                   <div className="text-sm text-gray-400 mb-2">Place Your Bid:</div>
                   <div className="flex space-x-2">
@@ -188,97 +188,57 @@ export default function NFTModal({ nft, onClose }: NFTModalProps) {
                       className="flex-1 px-3 py-2 bg-gray-600 border border-gray-500 rounded-md text-white"
                       min={nft.highestBid ? nft.highestBid + 1 : (nft.price || 0) + 1}
                     />
-                    <button
-                      onClick={handlePlaceBid}
-                      className="px-4 py-2 bg-purple-600 hover:bg-purple-700 text-white rounded-md"
-                    >
-                      Place Bid
-                    </button>
-                  </div>
-                  <div className="text-xs text-gray-400 mt-2">
-                    Minimum bid: {nft.highestBid ? nft.highestBid + 1 : (nft.price || 0) + 1}{" "}
-                    {nft.priceType === "DOLLARS" ? "Dollars" : "WBUX"}
+                    <Button label="Place Bid" onClick={handlePlaceBid} color="bg-purple-600" />
                   </div>
                 </div>
               )}
-
-              {bids.length > 0 && (
-                <div className="p-4 bg-gray-700 rounded-lg">
-                  <div className="text-sm text-gray-400 mb-2">Bid History:</div>
-                  <div className="space-y-2 max-h-40 overflow-y-auto">
-                    {bids
-                      .sort((a, b) => new Date(b.timestamp).getTime() - new Date(a.timestamp).getTime())
-                      .map((bid) => (
-                        <div key={bid.id} className="flex justify-between items-center text-sm">
-                          <div className="text-white">{bid.bidderName}</div>
-                          <div className="text-white font-medium">
-                            {bid.amount} {nft.priceType === "DOLLARS" ? "Dollars" : "WBUX"}
-                          </div>
-                          <div className="text-gray-400">{formatDistanceToNow(new Date(bid.timestamp))} ago</div>
-                        </div>
-                      ))}
-                  </div>
-                </div>
-              )}
-            </div>
+            </>
           )}
 
+          {/* Action Buttons */}
           <div className="flex space-x-3">
             {isOwner ? (
               <>
                 {isActivated ? (
-                  <button
-                    onClick={handleDeactivate}
-                    className="flex-1 py-2 px-4 bg-red-600 hover:bg-red-700 text-white rounded-md"
-                  >
-                    Deactivate
-                  </button>
+                  <Button label="Deactivate" onClick={handleDeactivate} color="bg-red-600" />
                 ) : isForSale || isAuction ? (
-                  <button
-                    onClick={handleCancelSale}
-                    className="flex-1 py-2 px-4 bg-red-600 hover:bg-red-700 text-white rounded-md"
-                  >
-                    Cancel Listing
-                  </button>
+                  <Button label="Cancel Listing" onClick={handleCancelSale} color="bg-red-600" />
                 ) : (
-                  <>
-                    <button
-                      onClick={handleActivate}
-                      className="flex-1 py-2 px-4 bg-green-600 hover:bg-green-700 text-white rounded-md"
-                    >
-                      Activate
-                    </button>
-                  </>
+                  <Button label="Activate" onClick={handleActivate} color="bg-green-600" />
                 )}
               </>
             ) : (
               <>
-                {isForSale && (
-                  <button
-                    onClick={handleBuy}
-                    className="flex-1 py-2 px-4 bg-green-600 hover:bg-green-700 text-white rounded-md"
-                  >
-                    Buy Now
-                  </button>
-                )}
-
+                {isForSale && <Button label="Buy Now" onClick={handleBuy} color="bg-green-600" />}
                 {isAuction && (
-                  <button
+                  <Button
+                    label={showBidForm ? "Cancel" : "Place Bid"}
                     onClick={() => setShowBidForm(!showBidForm)}
-                    className="flex-1 py-2 px-4 bg-purple-600 hover:bg-purple-700 text-white rounded-md"
-                  >
-                    {showBidForm ? "Cancel" : "Place Bid"}
-                  </button>
+                    color="bg-purple-600"
+                  />
                 )}
               </>
             )}
-
-            <button onClick={onClose} className="flex-1 py-2 px-4 bg-gray-600 hover:bg-gray-700 text-white rounded-md">
-              Close
-            </button>
+            <Button label="Close" onClick={onClose} color="bg-gray-600" />
           </div>
         </div>
       </div>
     </div>
   )
+}
+
+// Helper function for boost type labels
+function getBoostTypeLabel(type: string): string {
+  switch (type) {
+    case "MINING_RATE":
+      return "Mining Rate"
+    case "MINING_TIME":
+      return "Mining Time"
+    case "REWARD_MULTIPLIER":
+      return "Reward Multiplier"
+    case "SPECIAL":
+      return "Special"
+    default:
+      return "Unknown"
+  }
 }
