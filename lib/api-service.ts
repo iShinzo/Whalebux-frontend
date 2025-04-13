@@ -3,79 +3,8 @@
 // API service for interacting with the backend
 const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL || "https://whalebux-vercel.onrender.com/api"
 
-// Log the API URL on startup
-if (typeof window !== "undefined") {
-  console.log("API_BASE_URL:", API_BASE_URL)
-}
-
-// Add connection status monitoring
+// Backend connection status
 let isBackendAvailable = true
-
-// Helper function to check if backend is available
-const checkBackendAvailability = async () => {
-  try {
-    const healthUrl = `${API_BASE_URL.replace(/\/api$/, "")}/health`
-    console.log("Checking backend health at:", healthUrl)
-
-    const response = await fetch(healthUrl, {
-      method: "GET",
-      headers: { "Content-Type": "application/json" },
-      cache: "no-store",
-      mode: "cors", // Explicitly set CORS mode
-    })
-
-    console.log("Health check response:", response.status, response.statusText)
-
-    if (response.ok) {
-      const data = await response.json()
-      console.log("Health check data:", data)
-    }
-
-    isBackendAvailable = response.ok
-    return isBackendAvailable
-  } catch (error) {
-    console.error("Backend health check failed:", error)
-    isBackendAvailable = false
-    return false
-  }
-}
-
-// Add this function to test CORS
-const testCors = async () => {
-  try {
-    console.log("Testing CORS with backend...")
-    const response = await fetch(`${API_BASE_URL.replace(/\/api$/, "")}/cors/test`, {
-      method: "GET",
-      headers: { "Content-Type": "application/json" },
-      mode: "cors", // Explicitly set CORS mode
-    })
-
-    console.log("CORS test response status:", response.status)
-
-    if (response.ok) {
-      const data = await response.json()
-      console.log("CORS test successful:", data)
-      return true
-    } else {
-      console.error("CORS test failed:", response.statusText)
-      return false
-    }
-  } catch (error) {
-    console.error("CORS test error:", error)
-    return false
-  }
-}
-
-// Check backend availability and CORS on startup
-if (typeof window !== "undefined") {
-  checkBackendAvailability()
-    .then((available) => console.log(`Backend is ${available ? "available" : "unavailable"}`))
-    .catch((err) => console.error("Error checking backend availability:", err))
-
-  testCors()
-    .then((success) => console.log(`CORS test ${success ? "passed" : "failed"}`))
-    .catch((err) => console.error("Error during CORS test:", err))
-}
 
 // Types
 interface UserData {
@@ -87,7 +16,7 @@ interface UserData {
   level: number
   experience: number
   wbuxDollars: number
-  wbuxBalance: number // Token balance
+  wbuxBalance: number
   loginStreak: number
   referralCode: string
   referralCount: number
@@ -97,7 +26,7 @@ interface UserData {
   miningBoostLevel: number
   miningTimeLevel: number
   nftSlotLevel: number
-  completedTasks: string[] // Array of task IDs
+  completedTasks: string[]
 }
 
 interface CreateUserData {
@@ -117,8 +46,8 @@ interface Task {
   rewardType: "DOLLARS" | "TOKENS"
   expiresAt?: string
   createdAt: string
-  global: boolean // If true, available to all users
-  completed?: boolean // Client-side property
+  global: boolean
+  completed?: boolean
 }
 
 interface Friend {
@@ -129,26 +58,21 @@ interface Friend {
   lastName?: string
 }
 
-const createDefaultUser = (telegramId: number): UserData => {
-  const userId = `user-${telegramId}-${Date.now()}`
-  const referralCode = Math.random().toString(36).substring(2, 10).toUpperCase()
-
-  return {
-    userId: userId,
-    telegramId: telegramId,
-    level: 1,
-    experience: 0,
-    wbuxDollars: 0,
-    wbuxBalance: 0,
-    loginStreak: 0,
-    referralCode: referralCode,
-    referralCount: 0,
-    lastLogin: new Date().toISOString(),
-    miningRateLevel: 1,
-    miningBoostLevel: 1,
-    miningTimeLevel: 1,
-    nftSlotLevel: 1,
-    completedTasks: [],
+// Helper function to check backend availability
+const checkBackendAvailability = async (): Promise<boolean> => {
+  const healthUrl = `${API_BASE_URL.replace(/\/api$/, "")}/health`
+  try {
+    const response = await fetch(healthUrl, {
+      method: "GET",
+      headers: { "Content-Type": "application/json" },
+      cache: "no-store",
+    })
+    isBackendAvailable = response.ok
+    return isBackendAvailable
+  } catch (error) {
+    console.error("Backend health check failed:", error)
+    isBackendAvailable = false
+    return false
   }
 }
 
@@ -157,29 +81,21 @@ export const userApi = {
   // Get user data
   getUserData: async (telegramId: number): Promise<UserData> => {
     try {
-      // Check if backend is available
-      if (!isBackendAvailable) {
-        await checkBackendAvailability()
+      if (!isBackendAvailable && !(await checkBackendAvailability())) {
+        throw new Error("Backend is unavailable")
       }
 
       const url = `${API_BASE_URL}/users/${telegramId}`
-      console.log("Fetching user data from:", url)
-
       const response = await fetch(url, {
         headers: { "Content-Type": "application/json" },
         cache: "no-store",
-        mode: "cors", // Explicitly set CORS mode
       })
 
-      console.log("User data response:", response.status, response.statusText)
-
       if (!response.ok) {
-        throw new Error(`Failed to fetch user data: ${response.status} ${response.statusText}`)
+        throw new Error(`Failed to fetch user data: ${response.statusText}`)
       }
 
-      const userData = await response.json()
-      console.log("User data received:", userData)
-      return userData
+      return await response.json()
     } catch (error) {
       console.error("Error fetching user data:", error)
       throw error
@@ -189,38 +105,24 @@ export const userApi = {
   // Create new user
   createUser: async (userData: CreateUserData): Promise<UserData> => {
     try {
-      // Check if backend is available
-      if (!isBackendAvailable) {
-        await checkBackendAvailability()
+      if (!isBackendAvailable && !(await checkBackendAvailability())) {
+        throw new Error("Backend is unavailable")
       }
 
-      console.log("Creating user with data:", userData)
-      console.log("API URL being used:", `${API_BASE_URL}/users`)
-
-      const response = await fetch(`${API_BASE_URL}/users`, {
+      const url = `${API_BASE_URL}/users`
+      const response = await fetch(url, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify(userData),
-        mode: "cors", // Explicitly set CORS mode
       })
 
-      console.log("Create user response status:", response.status, response.statusText)
-
       if (!response.ok) {
-        const errorText = await response.text()
-        console.error("Error response body:", errorText)
-        throw new Error(`Failed to create user: ${response.status} ${response.statusText} - ${errorText}`)
+        throw new Error(`Failed to create user: ${response.statusText}`)
       }
 
-      const data = await response.json()
-      console.log("User created successfully:", data)
-      return data
+      return await response.json()
     } catch (error) {
       console.error("Error creating user:", error)
-      if (error instanceof Error) {
-        console.error("Error message:", error.message)
-        console.error("Error stack:", error.stack)
-      }
       throw error
     }
   },
@@ -228,16 +130,15 @@ export const userApi = {
   // Update user data
   updateUserData: async (telegramId: number, updates: Partial<UserData>): Promise<UserData> => {
     try {
-      // Check if backend is available
-      if (!isBackendAvailable) {
-        await checkBackendAvailability()
+      if (!isBackendAvailable && !(await checkBackendAvailability())) {
+        throw new Error("Backend is unavailable")
       }
 
-      const response = await fetch(`${API_BASE_URL}/users/${telegramId}`, {
+      const url = `${API_BASE_URL}/users/${telegramId}`
+      const response = await fetch(url, {
         method: "PATCH",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify(updates),
-        mode: "cors", // Explicitly set CORS mode
       })
 
       if (!response.ok) {
@@ -257,15 +158,14 @@ export const taskApi = {
   // Get tasks for user
   getTasksForUser: async (telegramId: number): Promise<Task[]> => {
     try {
-      // Check if backend is available
-      if (!isBackendAvailable) {
-        await checkBackendAvailability()
+      if (!isBackendAvailable && !(await checkBackendAvailability())) {
+        return []
       }
 
-      const response = await fetch(`${API_BASE_URL}/tasks?userId=${telegramId}`, {
+      const url = `${API_BASE_URL}/tasks?userId=${telegramId}`
+      const response = await fetch(url, {
         headers: { "Content-Type": "application/json" },
         cache: "no-store",
-        mode: "cors", // Explicitly set CORS mode
       })
 
       if (!response.ok) {
@@ -282,16 +182,15 @@ export const taskApi = {
   // Complete task
   completeTask: async (taskId: string, telegramId: number): Promise<any> => {
     try {
-      // Check if backend is available
-      if (!isBackendAvailable) {
-        await checkBackendAvailability()
+      if (!isBackendAvailable && !(await checkBackendAvailability())) {
+        throw new Error("Backend is unavailable")
       }
 
-      const response = await fetch(`${API_BASE_URL}/tasks/${taskId}/complete`, {
+      const url = `${API_BASE_URL}/tasks/${taskId}/complete`
+      const response = await fetch(url, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ userId: telegramId }),
-        mode: "cors", // Explicitly set CORS mode
       })
 
       if (!response.ok) {
@@ -309,7 +208,8 @@ export const taskApi = {
 // Get referred friends
 export const getFriends = async (telegramId: number): Promise<Friend[]> => {
   try {
-    const response = await fetch(`${API_BASE_URL}/users/${telegramId}/friends`, {
+    const url = `${API_BASE_URL}/users/${telegramId}/friends`
+    const response = await fetch(url, {
       headers: { "Content-Type": "application/json" },
       cache: "no-store",
     })
@@ -328,7 +228,8 @@ export const getFriends = async (telegramId: number): Promise<Friend[]> => {
 // Check if a referral code is valid
 export const checkReferralCode = async (referralCode: string): Promise<boolean> => {
   try {
-    const response = await fetch(`${API_BASE_URL}/referrals/check/${referralCode}`, {
+    const url = `${API_BASE_URL}/referrals/check/${referralCode}`
+    const response = await fetch(url, {
       headers: { "Content-Type": "application/json" },
       cache: "no-store",
     })
@@ -348,7 +249,8 @@ export const checkReferralCode = async (referralCode: string): Promise<boolean> 
 // Apply a referral code
 export const applyReferralCode = async (telegramId: number, referralCode: string): Promise<boolean> => {
   try {
-    const response = await fetch(`${API_BASE_URL}/referrals/apply`, {
+    const url = `${API_BASE_URL}/referrals/apply`
+    const response = await fetch(url, {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({ telegramId, referralCode }),
