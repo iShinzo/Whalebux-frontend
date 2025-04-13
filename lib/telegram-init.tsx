@@ -3,104 +3,148 @@
 import { useEffect, useState } from "react"
 import { userApi } from "./api-service"
 
+// Extend the global Window type to include Telegram WebApp
 declare global {
   interface Window {
     Telegram?: {
-      WebApp?: any
+      WebApp?: {
+        ready: () => void
+        expand: () => void
+        initDataUnsafe?: {
+          user?: {
+            id: number
+            username?: string
+            first_name?: string
+            last_name?: string
+          }
+        }
+      }
     }
   }
 }
 
-export function useTelegramWebApp() {
-  const [webApp, setWebApp] = useState<any>(null)
-  const [user, setUser] = useState<any>(null)
-  const [loading, setLoading] = useState(true)
+// Define types for the custom hook
+interface TelegramWebApp {
+  ready: () => void
+  expand: () => void
+  initDataUnsafe?: {
+    user?: TelegramUser
+  }
+}
+
+interface TelegramUser {
+  id: number
+  username?: string
+  first_name?: string
+  last_name?: string
+}
+
+interface UserData {
+  userId: string
+  telegramId: number // Ensure this is strictly a number (no undefined)
+  username?: string
+  firstName?: string
+  lastName?: string
+}
+
+interface TelegramWebAppHook {
+  webApp: TelegramWebApp | null
+  user: UserData | null
+  loading: boolean
+  error: string | null
+}
+
+export function useTelegramWebApp(): TelegramWebAppHook {
+  const [webApp, setWebApp] = useState<TelegramWebApp | null>(null)
+  const [user, setUser] = useState<UserData | null>(null)
+  const [loading, setLoading] = useState<boolean>(true)
   const [error, setError] = useState<string | null>(null)
 
   useEffect(() => {
-    // Check if we're in a browser environment
+    // Ensure this runs only in a browser environment
     if (typeof window === "undefined") return
 
     const initTelegram = async () => {
       try {
         console.log("Initializing Telegram WebApp...")
-        console.log("Window object:", typeof window)
-        console.log("Telegram object:", typeof window.Telegram)
-        console.log("WebApp object:", window.Telegram?.WebApp)
 
-        // Initialize Telegram WebApp if available
+        // Check if Telegram WebApp is available
         if (window.Telegram?.WebApp) {
-          console.log("Telegram WebApp found, initializing...")
+          console.log("Telegram WebApp detected, initializing...")
 
-          // Initialize the WebApp
+          // Prepare the WebApp
           window.Telegram.WebApp.ready()
-
-          // Expand the WebApp to full height
           window.Telegram.WebApp.expand()
 
-          // Get user data from Telegram
+          // Extract user data from Telegram initData
           const initData = window.Telegram.WebApp.initDataUnsafe
+          const telegramUser = initData?.user
 
-          if (initData && initData.user) {
-            console.log("User data from Telegram:", initData.user)
-
-            // Get or create user in our database
-            const telegramId = initData.user.id
+          if (telegramUser) {
+            const telegramId = telegramUser.id
+            console.log("Telegram user data:", telegramUser)
 
             try {
-              // Check if user exists in our database
+              // Fetch user data from the backend
               const userData = await userApi.getUserData(telegramId)
-              console.log("User data from API:", userData)
-              setUser(userData)
-            } catch (error) {
-              console.error("Error fetching user data:", error)
+              console.log("User data fetched from API:", userData)
+              setUser({
+                ...userData,
+                telegramId: userData.telegramId ?? telegramId, // Ensure telegramId is set
+              })
+            } catch (fetchError) {
+              console.error("Error fetching user data:", fetchError)
 
-              // If user doesn't exist, create a new user
-              if (error instanceof Error && (error.message.includes("404") || error.message.includes("not found"))) {
-                console.log("Creating new user...")
+              // Handle case when the user does not exist in the backend
+              if (fetchError instanceof Error && fetchError.message.includes("404")) {
+                console.log("User not found in database, creating new user...")
 
                 try {
-                  // Create new user with Telegram data
-                  console.log("Attempting to create user with telegramId:", telegramId);
-                  console.log("User data to be sent:", {
-                    telegramId: telegramId,
-                    username: initData.user.username || `user_${telegramId}`,
-                    firstName: initData.user.first_name || "",
-                    lastName: initData.user.last_name || "",
-                  });
-                  
                   const newUser = await userApi.createUser({
-                    telegramId: telegramId,
-                    username: initData.user.username || `user_${telegramId}`,
-                    firstName: initData.user.first_name || "",
-                    lastName: initData.user.last_name || "",
-                  });
-                  console.log("New user created successfully:", newUser);
-                  setUser(newUser);
+                    telegramId,
+                    username: telegramUser.username || `user_${telegramId}`,
+                    firstName: telegramUser.first_name || "",
+                    lastName: telegramUser.last_name || "",
+                  })
+                  console.log("New user created successfully:", newUser)
+                  setUser({
+                    ...newUser,
+                    telegramId: newUser.telegramId ?? telegramId, // Ensure telegramId is set
+                  })
                 } catch (createError) {
-                  console.error("Error creating user in telegram-init:", createError);
-                  console.error("Error type:", typeof createError);
-                  console.error("Error details:", createError instanceof Error ? createError.message : String(createError));
-                  setError(`Failed to create user account: ${createError instanceof Error ? createError.message : String(createError)}`);
+                  console.error("Error creating new user:", createError)
+                  setError(
+                    `Failed to create user: ${
+                      createError instanceof Error ? createError.message : String(createError)
+                    }`
+                  )
                 }
               } else {
-                setError(`Failed to fetch user data: ${error instanceof Error ? error.message : String(error)}`)
+                setError(
+                  `Failed to fetch user data: ${
+                    fetchError instanceof Error ? fetchError.message : String(fetchError)
+                  }`
+                )
               }
             }
           } else {
-            console.warn("No user data in Telegram WebApp initDataUnsafe")
+            console.warn("No user data available from Telegram WebApp")
             setError("No user data available from Telegram")
           }
 
-          // Set the WebApp in state
+          // Update the WebApp state
           setWebApp(window.Telegram.WebApp)
         } else {
-          console.warn("Telegram WebApp not found. Are you opening this app from within Telegram?")
+          console.warn("Telegram WebApp not detected. Ensure this is opened within Telegram.")
           setError("Not running inside Telegram")
         }
-      } catch (error) {
-        console.error("Error initializing Telegram WebApp:", error)
-        setError(`Initialization error: ${error instanceof Error ? error.message : String(error)}`)
+      } catch (initError) {
+        console.error("Error initializing Telegram WebApp:", initError)
+        setError(
+          `Initialization error: ${
+            initError instanceof Error ? initError.message : String(initError)
+          }`
+        )
       } finally {
         setLoading(false)
       }
