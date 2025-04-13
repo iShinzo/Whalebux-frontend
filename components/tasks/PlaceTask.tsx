@@ -1,10 +1,107 @@
 "use client"
 
 import type React from "react"
-
 import { useState } from "react"
 import { useUserStore } from "../../lib/stores/userStore"
 import { useTaskStore, type TaskType, type RewardType } from "../../lib/stores/taskStore"
+
+// Reusable input component
+const FormInput = ({
+  label,
+  id,
+  type = "text",
+  value,
+  onChange,
+  placeholder = "",
+  min,
+}: {
+  label: string
+  id: string
+  type?: string
+  value: string | number
+  onChange: (e: React.ChangeEvent<HTMLInputElement>) => void
+  placeholder?: string
+  min?: number
+}) => (
+  <div>
+    <label htmlFor={id} className="block text-sm font-medium text-gray-300 mb-1">
+      {label}
+    </label>
+    <input
+      type={type}
+      id={id}
+      value={value}
+      onChange={onChange}
+      placeholder={placeholder}
+      min={min}
+      className="w-full px-3 py-2 bg-gray-700 border border-gray-600 rounded-md text-white"
+    />
+  </div>
+)
+
+// Reusable textarea component
+const FormTextarea = ({
+  label,
+  id,
+  value,
+  onChange,
+  placeholder = "",
+  rows = 3,
+}: {
+  label: string
+  id: string
+  value: string
+  onChange: (e: React.ChangeEvent<HTMLTextAreaElement>) => void
+  placeholder?: string
+  rows?: number
+}) => (
+  <div>
+    <label htmlFor={id} className="block text-sm font-medium text-gray-300 mb-1">
+      {label}
+    </label>
+    <textarea
+      id={id}
+      value={value}
+      onChange={onChange}
+      rows={rows}
+      placeholder={placeholder}
+      className="w-full px-3 py-2 bg-gray-700 border border-gray-600 rounded-md text-white"
+    ></textarea>
+  </div>
+)
+
+// Reusable select component
+const FormSelect = <T extends string>({
+  label,
+  id,
+  value,
+  onChange,
+  options,
+}: {
+  label: string
+  id: string
+  value: T
+  onChange: (e: React.ChangeEvent<HTMLSelectElement>) => void
+  options: { label: string; value: T }[]
+}) => (
+  <div>
+    <label htmlFor={id} className="block text-sm font-medium text-gray-300 mb-1">
+      {label}
+    </label>
+    <select
+      id={id}
+      value={value}
+      onChange={onChange}
+      className="w-full px-3 py-2 bg-gray-700 border border-gray-600 rounded-md text-white"
+    >
+      {options.map((option) => (
+        <option key={option.value} value={option.value}>
+          {option.label}
+        </option>
+      ))}
+    </select>
+  </div>
+)
 
 export default function PlaceTask() {
   const { wbuxDollars, wbuxBalance, userId, username } = useUserStore()
@@ -20,42 +117,42 @@ export default function PlaceTask() {
   const [error, setError] = useState("")
   const [success, setSuccess] = useState(false)
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault()
     setError("")
     setSuccess(false)
 
-    // Validate inputs
+    // Input validations
     if (!title.trim()) {
-      setError("Title is required")
+      setError("Title is required.")
       return
     }
 
     if (!description.trim()) {
-      setError("Description is required")
+      setError("Description is required.")
       return
     }
 
     if (reward <= 0) {
-      setError("Reward must be greater than 0")
+      setError("Reward must be greater than 0.")
       return
     }
 
-    // Check if user has enough balance
+    // Check user balance
     if (rewardType === "DOLLARS" && reward > wbuxDollars) {
-      setError("You don't have enough WhaleBux Dollars")
+      setError("You don't have enough WhaleBux Dollars.")
       return
     }
 
     if (rewardType === "TOKENS" && reward > wbuxBalance) {
-      setError("You don't have enough WBUX Tokens")
+      setError("You don't have enough WBUX Tokens.")
       return
     }
 
     // Create task
     addTask({
-      title,
-      description,
+      title: title.trim(),
+      description: description.trim(),
       reward,
       rewardType,
       type: taskType,
@@ -67,7 +164,10 @@ export default function PlaceTask() {
     setTitle("")
     setDescription("")
     setReward(10)
+    setRewardType("DOLLARS")
+    setTaskType("REFERRAL")
     setLink("")
+    setProofRequired(true)
     setSuccess(true)
   }
 
@@ -84,96 +184,65 @@ export default function PlaceTask() {
       {error && <div className="mb-4 p-3 bg-red-900/50 border border-red-700 rounded text-red-400">{error}</div>}
 
       <form onSubmit={handleSubmit} className="space-y-4">
-        <div>
-          <label htmlFor="title" className="block text-sm font-medium text-gray-300 mb-1">
-            Task Title
-          </label>
-          <input
-            type="text"
-            id="title"
-            value={title}
-            onChange={(e) => setTitle(e.target.value)}
-            className="w-full px-3 py-2 bg-gray-700 border border-gray-600 rounded-md text-white"
-            placeholder="e.g., Sign up for Crypto Airdrop"
-          />
-        </div>
+        <FormInput
+          label="Task Title"
+          id="title"
+          value={title}
+          onChange={(e) => setTitle(e.target.value)}
+          placeholder="e.g., Sign up for Crypto Airdrop"
+        />
 
-        <div>
-          <label htmlFor="description" className="block text-sm font-medium text-gray-300 mb-1">
-            Task Description
-          </label>
-          <textarea
-            id="description"
-            value={description}
-            onChange={(e) => setDescription(e.target.value)}
-            rows={3}
-            className="w-full px-3 py-2 bg-gray-700 border border-gray-600 rounded-md text-white"
-            placeholder="Describe what the user needs to do to complete this task..."
-          ></textarea>
-        </div>
+        <FormTextarea
+          label="Task Description"
+          id="description"
+          value={description}
+          onChange={(e) => setDescription(e.target.value)}
+          placeholder="Describe what the user needs to do to complete this task..."
+        />
 
         <div className="grid grid-cols-2 gap-4">
-          <div>
-            <label htmlFor="reward" className="block text-sm font-medium text-gray-300 mb-1">
-              Reward Amount
-            </label>
-            <input
-              type="number"
-              id="reward"
-              value={reward}
-              onChange={(e) => setReward(Number(e.target.value))}
-              min="1"
-              className="w-full px-3 py-2 bg-gray-700 border border-gray-600 rounded-md text-white"
-            />
-          </div>
+          <FormInput
+            label="Reward Amount"
+            id="reward"
+            type="number"
+            value={reward}
+            onChange={(e) => setReward(Number(e.target.value))}
+            min={1}
+          />
 
-          <div>
-            <label htmlFor="rewardType" className="block text-sm font-medium text-gray-300 mb-1">
-              Reward Type
-            </label>
-            <select
-              id="rewardType"
-              value={rewardType}
-              onChange={(e) => setRewardType(e.target.value as RewardType)}
-              className="w-full px-3 py-2 bg-gray-700 border border-gray-600 rounded-md text-white"
-            >
-              <option value="DOLLARS">WhaleBux Dollars</option>
-              <option value="TOKENS">WBUX Tokens</option>
-            </select>
-          </div>
-        </div>
-
-        <div>
-          <label htmlFor="taskType" className="block text-sm font-medium text-gray-300 mb-1">
-            Task Type
-          </label>
-          <select
-            id="taskType"
-            value={taskType}
-            onChange={(e) => setTaskType(e.target.value as TaskType)}
-            className="w-full px-3 py-2 bg-gray-700 border border-gray-600 rounded-md text-white"
-          >
-            <option value="REFERRAL">Referral Link</option>
-            <option value="AIRDROP">Crypto Airdrop</option>
-            <option value="CHANNEL_JOIN">Join Channel/Group</option>
-            <option value="SOCIAL">Social Media Task</option>
-            <option value="REVIEW">Write Review</option>
-          </select>
-        </div>
-
-        <div>
-          <label htmlFor="link" className="block text-sm font-medium text-gray-300 mb-1">
-            Task Link (Optional)
-          </label>
-          <input
-            type="text"
-            id="link"
-            value={link}
-            onChange={(e) => setLink(e.target.value)}
-            className="w-full px-3 py-2 bg-gray-700 border border-gray-600 rounded-md text-white"
-            placeholder="https://example.com/referral?code=123"
+          <FormSelect
+            label="Reward Type"
+            id="rewardType"
+            value={rewardType}
+            onChange={(e) => setRewardType(e.target.value as RewardType)}
+            options={[
+              { label: "WhaleBux Dollars", value: "DOLLARS" },
+              { label: "WBUX Tokens", value: "TOKENS" },
+            ]}
           />
         </div>
+
+        <FormSelect
+          label="Task Type"
+          id="taskType"
+          value={taskType}
+          onChange={(e) => setTaskType(e.target.value as TaskType)}
+          options={[
+            { label: "Referral Link", value: "REFERRAL" },
+            { label: "Crypto Airdrop", value: "AIRDROP" },
+            { label: "Join Channel/Group", value: "CHANNEL_JOIN" },
+            { label: "Social Media Task", value: "SOCIAL" },
+            { label: "Write Review", value: "REVIEW" },
+          ]}
+        />
+
+        <FormInput
+          label="Task Link (Optional)"
+          id="link"
+          value={link}
+          onChange={(e) => setLink(e.target.value)}
+          placeholder="https://example.com/referral?code=123"
+        />
 
         <div className="flex items-center">
           <input
