@@ -8,12 +8,10 @@ export default function MiningStats() {
   const { experience, wbuxDollars, wbuxBalance } = useUserStore()
   const { getMiningStats } = useMiningStore()
 
-  const level = getLevelFromExperience(experience)
-  const nextLevelXp = getExperienceForNextLevel(level)
-  const levelProgress = getLevelProgress(experience, level)
-  const { estimatedEarnings, miningDuration, timeReduction } = getMiningStats()
-    level)
-  const { estimatedEarnings, miningDuration, timeReduction } = getMiningStats()
+  const level = getLevelFromExperience(experience);
+  const nextLevelXp = getExperienceForNextLevel(level);
+  const levelProgress = getLevelProgress(experience, level);
+  const { estimatedEarnings, miningDuration, timeReduction } = getMiningStats(level);
 
   return (
     <div className="w-full max-w-md bg-gray-800 rounded-lg p-4 mb-6">
