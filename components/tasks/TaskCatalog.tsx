@@ -1,6 +1,6 @@
 "use client"
 
-import { useState, useEffect } from "react"
+import { useState, useEffect, useMemo } from "react"
 import { useUserStore } from "../../lib/stores/userStore"
 import { useTaskStore, type Task, type TaskType } from "../../lib/stores/taskStore"
 import { formatDistanceToNow } from "date-fns"
@@ -8,90 +8,72 @@ import { formatDistanceToNow } from "date-fns"
 export default function TaskCatalog() {
   const { userId, username } = useUserStore()
   const { getAvailableTasks, applyForTask } = useTaskStore()
+
   const [availableTasks, setAvailableTasks] = useState<Task[]>([])
   const [filter, setFilter] = useState<TaskType | "ALL">("ALL")
   const [sortBy, setSortBy] = useState<"newest" | "reward">("newest")
-  const [success, setSuccess] = useState("")
+  const [successMessage, setSuccessMessage] = useState("")
 
+  // Fetch available tasks whenever the userId changes
   useEffect(() => {
     if (userId) {
       setAvailableTasks(getAvailableTasks(userId))
     }
   }, [userId, getAvailableTasks])
 
+  // Handle applying to a task
   const handleApply = (taskId: string) => {
-    if (userId && username) {
-      applyForTask(taskId, userId, username)
-      setAvailableTasks(getAvailableTasks(userId))
-      setSuccess("You've successfully applied for the task!")
-      setTimeout(() => setSuccess(""), 3000)
-    }
+    if (!userId || !username) return
+
+    applyForTask(taskId, userId, username)
+    setAvailableTasks(getAvailableTasks(userId))
+    setSuccessMessage("You've successfully applied for the task!")
+    setTimeout(() => setSuccessMessage(""), 3000)
   }
 
-  const filteredTasks = availableTasks.filter((task) => {
-    if (filter === "ALL") return true
-    return task.type === filter
-  })
+  // Memoized filtered tasks to avoid unnecessary calculations
+  const filteredTasks = useMemo(() => {
+    return filter === "ALL"
+      ? availableTasks
+      : availableTasks.filter((task) => task.type === filter)
+  }, [availableTasks, filter])
 
-  const sortedTasks = [...filteredTasks].sort((a, b) => {
-    if (sortBy === "newest") {
-      return new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime()
-    } else {
+  // Memoized sorted tasks to avoid unnecessary calculations
+  const sortedTasks = useMemo(() => {
+    return [...filteredTasks].sort((a, b) => {
+      if (sortBy === "newest") {
+        return new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime()
+      }
       return b.reward - a.reward
-    }
-  })
+    })
+  }, [filteredTasks, sortBy])
 
   return (
     <div className="bg-gray-800 rounded-lg p-4">
       <h2 className="text-xl font-semibold text-white mb-4">Task Marketplace</h2>
 
-      {success && (
-        <div className="mb-4 p-3 bg-green-900/50 border border-green-700 rounded text-green-400">{success}</div>
+      {successMessage && (
+        <div className="mb-4 p-3 bg-green-900/50 border border-green-700 rounded text-green-400">
+          {successMessage}
+        </div>
       )}
 
+      {/* Filter Buttons */}
       <div className="flex flex-wrap gap-2 mb-4">
-        <button
-          className={`px-3 py-1 text-sm rounded-full ${
-            filter === "ALL" ? "bg-blue-600 text-white" : "bg-gray-700 text-gray-300 hover:bg-gray-600"
-          }`}
-          onClick={() => setFilter("ALL")}
-        >
-          All Tasks
-        </button>
-        <button
-          className={`px-3 py-1 text-sm rounded-full ${
-            filter === "REFERRAL" ? "bg-blue-600 text-white" : "bg-gray-700 text-gray-300 hover:bg-gray-600"
-          }`}
-          onClick={() => setFilter("REFERRAL")}
-        >
-          Referrals
-        </button>
-        <button
-          className={`px-3 py-1 text-sm rounded-full ${
-            filter === "AIRDROP" ? "bg-blue-600 text-white" : "bg-gray-700 text-gray-300 hover:bg-gray-600"
-          }`}
-          onClick={() => setFilter("AIRDROP")}
-        >
-          Airdrops
-        </button>
-        <button
-          className={`px-3 py-1 text-sm rounded-full ${
-            filter === "CHANNEL_JOIN" ? "bg-blue-600 text-white" : "bg-gray-700 text-gray-300 hover:bg-gray-600"
-          }`}
-          onClick={() => setFilter("CHANNEL_JOIN")}
-        >
-          Channels
-        </button>
-        <button
-          className={`px-3 py-1 text-sm rounded-full ${
-            filter === "SOCIAL" ? "bg-blue-600 text-white" : "bg-gray-700 text-gray-300 hover:bg-gray-600"
-          }`}
-          onClick={() => setFilter("SOCIAL")}
-        >
-          Social
-        </button>
+        {["ALL", "REFERRAL", "AIRDROP", "CHANNEL_JOIN", "SOCIAL"].map((type) => (
+          <button
+            key={type}
+            className={`px-3 py-1 text-sm rounded-full ${
+              filter === type ? "bg-blue-600 text-white" : "bg-gray-700 text-gray-300 hover:bg-gray-600"
+            }`}
+            onClick={() => setFilter(type as TaskType | "ALL")}
+          >
+            {type === "ALL" ? "All Tasks" : getTaskTypeLabel(type as TaskType)}
+          </button>
+        ))}
       </div>
 
+      {/* Sort Dropdown */}
       <div className="flex justify-between items-center mb-4">
         <div className="text-sm text-gray-400">{sortedTasks.length} tasks available</div>
         <div className="flex items-center">
@@ -107,10 +89,12 @@ export default function TaskCatalog() {
         </div>
       </div>
 
+      {/* Task List */}
       {sortedTasks.length > 0 ? (
         <div className="space-y-4">
           {sortedTasks.map((task) => (
             <div key={task.id} className="bg-gray-700 rounded-lg p-4">
+              {/* Task Header */}
               <div className="flex justify-between items-start mb-2">
                 <h3 className="text-lg font-medium text-white">{task.title}</h3>
                 <div
@@ -122,8 +106,10 @@ export default function TaskCatalog() {
                 </div>
               </div>
 
+              {/* Task Description */}
               <p className="text-gray-300 text-sm mb-3">{task.description}</p>
 
+              {/* Task Link */}
               {task.link && (
                 <div className="mb-3">
                   <a
@@ -137,11 +123,13 @@ export default function TaskCatalog() {
                 </div>
               )}
 
+              {/* Task Footer */}
               <div className="flex justify-between items-center text-xs text-gray-400 mb-4">
                 <div>Posted by: {task.creatorName}</div>
                 <div>{formatDistanceToNow(new Date(task.createdAt))} ago</div>
               </div>
 
+              {/* Task Actions */}
               <div className="flex justify-between items-center">
                 <div className={`px-2 py-1 text-xs rounded-full ${getTaskTypeColor(task.type)}`}>
                   {getTaskTypeLabel(task.type)}
