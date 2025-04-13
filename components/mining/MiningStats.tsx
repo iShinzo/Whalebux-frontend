@@ -12,7 +12,6 @@ export default function MiningStats() {
   const nextLevelXp = getExperienceForNextLevel(level)
   const levelProgress = getLevelProgress(experience, level)
   const { estimatedEarnings, miningDuration, timeReduction } = getMiningStats()
-  \
     level)
   const { estimatedEarnings, miningDuration, timeReduction } = getMiningStats()
 
