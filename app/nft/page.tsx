@@ -1,33 +1,78 @@
-"use client"
+"use client";
 
-import { useEffect, useState, useMemo } from "react"
-import { useRouter } from "next/navigation"
-import { useUserStore } from "../../lib/stores/userStore"
-import { useNFTStore, initializeNFTs } from "../../lib/stores/nftStore"
-import NFTGrid from "../../components/nft/NFTGrid"
-import WalletConnect from "../../components/wallet/WalletConnect"
-import WalletBalance from "../../components/wallet/WalletBalance"
+import { useEffect, useState, useMemo } from "react";
+import { useRouter } from "next/navigation";
+import { useUserStore } from "../../lib/stores/userStore";
+import { useNFTStore } from "../../lib/stores/nftStore";
+import NFTGrid from "../../components/nft/NFTGrid";
+import WalletConnect from "../../components/wallet/WalletConnect";
+import WalletBalance from "../../components/wallet/WalletBalance";
 
 export default function NFTMarketplace() {
-  const router = useRouter()
-  const { userId } = useUserStore()
-  const { getMarketplaceNFTs, getOwnedNFTs, getActiveNFTs } = useNFTStore()
+  const router = useRouter();
+  const { userId } = useUserStore();
+  const { getMarketplaceNFTs, getOwnedNFTs, getActiveNFTs, addNFT } = useNFTStore();
 
-  const [activeTab, setActiveTab] = useState<"marketplace" | "my-nfts" | "active-nfts">("marketplace")
+  const [activeTab, setActiveTab] = useState<"marketplace" | "my-nfts" | "active-nfts">("marketplace");
 
-  // Initialize NFTs on component mount
+  // Automatically initialize NFT data on first render
   useEffect(() => {
-    initializeNFTs()
-  }, [])
+    const initializeNFTs = () => {
+      if (useNFTStore.getState().nfts.length === 0) {
+        // Sample NFTs initialization
+        const sampleNFTs = [
+          {
+            name: "Mining Whale",
+            description: "Increases mining rate by 10%",
+            image: "/nfts/mining-whale.png",
+            rarity: "GREEN" as const,
+            type: "MINING_BOOST" as const,
+            boost: {
+              type: "MINING_RATE" as const,
+              value: 10,
+              duration: 7, // 7 days
+            },
+          },
+          {
+            name: "Time Dolphin",
+            description: "Reduces mining cooldown by 15%",
+            image: "/nfts/time-dolphin.png",
+            rarity: "BLUE" as const,
+            type: "TIME_BOOST" as const,
+            boost: {
+              type: "MINING_TIME" as const,
+              value: 15,
+              duration: 7, // 7 days
+            },
+          },
+          {
+            name: "Reward Orca",
+            description: "Increases mining rewards by 20%",
+            image: "/nfts/reward-orca.png",
+            rarity: "PURPLE" as const,
+            type: "REWARD_BOOST" as const,
+            boost: {
+              type: "REWARD_MULTIPLIER" as const,
+              value: 20,
+              duration: 7, // 7 days
+            },
+          },
+        ];
+        sampleNFTs.forEach((nft) => addNFT(nft));
+      }
+    };
+
+    initializeNFTs();
+  }, [addNFT]);
 
   // Fetch NFTs based on user state
-  const marketplaceNFTs = useMemo(() => getMarketplaceNFTs(), [getMarketplaceNFTs])
-  const ownedNFTs = useMemo(() => (userId ? getOwnedNFTs(userId) : []), [userId, getOwnedNFTs])
-  const activeNFTs = useMemo(() => (userId ? getActiveNFTs(userId) : []), [userId, getActiveNFTs])
+  const marketplaceNFTs = useMemo(() => getMarketplaceNFTs(), [getMarketplaceNFTs]);
+  const ownedNFTs = useMemo(() => (userId ? getOwnedNFTs(userId) : []), [userId, getOwnedNFTs]);
+  const activeNFTs = useMemo(() => (userId ? getActiveNFTs(userId) : []), [userId, getActiveNFTs]);
 
   // Helper function to calculate total boost for a specific type
   const calculateTotalBoost = (boostType: string) =>
-    activeNFTs.reduce((total, nft) => (nft.boost.type === boostType ? total + nft.boost.value : total), 0)
+    activeNFTs.reduce((total, nft) => (nft.boost.type === boostType ? total + nft.boost.value : total), 0);
 
   return (
     <div className="min-h-screen bg-gray-900 pb-20">
@@ -165,5 +210,5 @@ export default function NFTMarketplace() {
         </div>
       </div>
     </div>
-  )
+  );
 }
