@@ -1,6 +1,14 @@
 /** @type {import('next').NextConfig} */
 const nextConfig = {
-  // Add any custom configurations here
+  async redirects() {
+    return [
+      {
+        source: '/',
+        destination: '/page',
+        permanent: true, // Set this to true if the redirect is permanent.
+      },
+    ];
+  },
 };
 
-module.exports = nextConfig;;
+module.exports = nextConfig;
