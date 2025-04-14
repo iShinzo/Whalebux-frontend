@@ -21,18 +21,16 @@ export default function Friends() {
 
   // Memoize active friends count calculation
   const activeCount = useMemo(() => {
-    return friends
-      ?.filter(
-        (friend: Friend) =>
-          Date.now() - new Date(friend.lastActive).getTime() <
-          ACTIVE_FRIEND_THRESHOLD
-      )
-      .length;
+    if (!friends || friends.length === 0) return 0;
+    return friends.filter((friend: Friend) => {
+      const lastActiveTime = new Date(friend.lastActive).getTime();
+      return Date.now() - lastActiveTime < ACTIVE_FRIEND_THRESHOLD;
+    }).length;
   }, [friends]);
 
   // Stabilize the onClick handler
   const handleBackClick = useCallback(() => {
-    router.push("/");
+    router.push("/home"); // Replace "/" with the correct main page route
   }, [router]);
 
   // Update referral boost when component mounts or friends change
@@ -60,14 +58,12 @@ export default function Friends() {
         <ReferralLink />
 
         {/* Referral Boost Card */}
-        <ReferralBoostCard boost={referralBoost} friendCount={activeCount} />
+        <ReferralBoostCard boost={referralBoost ?? 0} friendCount={activeCount} />
 
         {/* Friends List Section */}
         <div className="mt-6">
-          <h2 className="text-xl font-semibold text-white mb-4">
-            Your Friends
-          </h2>
-          {friends.length > 0 ? (
+          <h2 className="text-xl font-semibold text-white mb-4">Your Friends</h2>
+          {friends && friends.length > 0 ? (
             <FriendsList friends={friends} />
           ) : (
             <p className="text-gray-400">No friends found.</p>
