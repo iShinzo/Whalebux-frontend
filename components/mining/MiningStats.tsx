@@ -1,20 +1,25 @@
-"use client"
+"use client";
 
-import { useUserStore } from "../../lib/stores/userStore"
-import { useMiningStore } from "../../lib/stores/miningStore"
-import { getLevelFromExperience, getLevelProgress, getExperienceForNextLevel } from "../../lib/config/miningConfig"
+import { useUserStore } from "../../lib/stores/userStore";
+import { useMiningStore } from "../../lib/stores/miningStore";
+import { getLevelFromExperience, getLevelProgress, getExperienceForNextLevel } from "../../lib/config/miningConfig";
 
 export default function MiningStats() {
-  const { experience, wbuxDollars, wbuxBalance } = useUserStore()
-  const { getMiningStats } = useMiningStore()
+  // Retrieve user data from the store
+  const { experience, wbuxDollars, wbuxBalance } = useUserStore();
 
+  // Retrieve mining stats from the mining store
+  const { getMiningStats } = useMiningStore();
+  const { estimatedEarnings, miningDuration, timeReduction } = getMiningStats(); // Removed argument since it expects none
+
+  // Calculate the user's level and progress
   const level = getLevelFromExperience(experience);
   const nextLevelXp = getExperienceForNextLevel(level);
   const levelProgress = getLevelProgress(experience, level);
-  const { estimatedEarnings, miningDuration, timeReduction } = getMiningStats(level);
 
   return (
     <div className="w-full max-w-md bg-gray-800 rounded-lg p-4 mb-6">
+      {/* Header Section */}
       <div className="flex justify-between items-center mb-4">
         <div>
           <div className="text-gray-400 text-sm">Level</div>
@@ -26,7 +31,7 @@ export default function MiningStats() {
         </div>
       </div>
 
-      {/* Level progress bar */}
+      {/* Level Progress Bar */}
       <div className="mb-4">
         <div className="flex justify-between text-sm text-gray-400 mb-1">
           <div>Progress to Level {level + 1}</div>
@@ -41,6 +46,7 @@ export default function MiningStats() {
         </div>
       </div>
 
+      {/* Mining Stats Section */}
       <div className="grid grid-cols-2 gap-4 mb-4">
         <div className="bg-gray-700 p-3 rounded-lg">
           <div className="text-gray-400 text-xs">Mining Duration</div>
@@ -54,6 +60,7 @@ export default function MiningStats() {
         </div>
       </div>
 
+      {/* Wallet Stats Section */}
       <div className="grid grid-cols-2 gap-4">
         <div className="bg-gray-700 p-3 rounded-lg">
           <div className="text-gray-400 text-xs">WhaleBux Dollars</div>
@@ -66,5 +73,5 @@ export default function MiningStats() {
         </div>
       </div>
     </div>
-  )
+  );
 }
