@@ -1,46 +1,46 @@
-"use client"
+"use client";
 
-import { create } from "zustand"
-import { persist } from "zustand/middleware"
-import { chains, getChainById, getChainByName } from "../config/chainConfig"
+import { create } from "zustand";
+import { persist } from "zustand/middleware";
+import { chains, getChainById, getChainByName } from "../config/chainConfig";
 
-export type WalletType = "METAMASK" | "WALLETCONNECT" | "COINBASE" | "PHANTOM"
+export type WalletType = "METAMASK" | "WALLETCONNECT" | "COINBASE" | "PHANTOM";
 
 export interface WalletConnection {
-  userId: string
-  address: string
-  type: WalletType
-  chainId: number
-  connectedAt: string
-  lastActive: string
-  preferredChain?: string // BSC or MINTME
+  userId: string;
+  address: string;
+  type: WalletType;
+  chainId: number;
+  connectedAt: string;
+  lastActive: string;
+  preferredChain?: string; // BSC or MINTME
 }
 
 interface WalletState {
-  connections: WalletConnection[]
-  isConnecting: boolean
-  error: string | null
-  pendingTransactions: string[] // Array of transaction hashes
+  connections: WalletConnection[];
+  isConnecting: boolean;
+  error: string | null;
+  pendingTransactions: string[]; // Array of transaction hashes
 
   // Connection Management
-  connectWallet: (userId: string, type: WalletType) => Promise<boolean>
-  disconnectWallet: (userId: string) => void
-  getWalletConnection: (userId: string) => WalletConnection | undefined
-  updateLastActive: (userId: string) => void
-  setPreferredChain: (userId: string, chain: string) => void
+  connectWallet: (userId: string, type: WalletType) => Promise<boolean>;
+  disconnectWallet: (userId: string) => void;
+  getWalletConnection: (userId: string) => WalletConnection | undefined;
+  updateLastActive: (userId: string) => void;
+  setPreferredChain: (userId: string, chain: string) => void;
 
   // Chain Management
-  switchChain: (userId: string, chainName: string) => Promise<boolean>
-  getCurrentChain: (userId: string) => string | null
+  switchChain: (userId: string, chainName: string) => Promise<boolean>;
+  getCurrentChain: (userId: string) => string | null;
 
   // Transaction Management
-  addPendingTransaction: (txHash: string) => void
-  removePendingTransaction: (txHash: string) => void
-  hasPendingTransactions: () => boolean
+  addPendingTransaction: (txHash: string) => void;
+  removePendingTransaction: (txHash: string) => void;
+  hasPendingTransactions: () => boolean;
 
   // Status Management
-  setConnecting: (isConnecting: boolean) => void
-  setError: (error: string | null) => void
+  setConnecting: (isConnecting: boolean) => void;
+  setError: (error: string | null) => void;
 }
 
 export const useWalletStore = create<WalletState>()(
@@ -52,34 +52,34 @@ export const useWalletStore = create<WalletState>()(
       pendingTransactions: [],
 
       connectWallet: async (userId, type) => {
-        set({ isConnecting: true, error: null })
+        set({ isConnecting: true, error: null });
 
         try {
           // Check if wallet is available
           if (type === "METAMASK" && typeof window.ethereum === "undefined") {
-            throw new Error("MetaMask is not installed")
+            throw new Error("MetaMask is not installed");
           }
 
-          let address = ""
-          let chainId = 0
+          let address = "";
+          let chainId = 0;
 
           // Connect to wallet (simplified for demo)
           if (type === "METAMASK") {
             try {
               // Request account access
-              const accounts = await window.ethereum.request({ method: "eth_requestAccounts" })
-              address = accounts[0]
+              const accounts = await window.ethereum.request({ method: "eth_requestAccounts" });
+              address = accounts[0];
 
-              // Get chain ID
-              chainId = await window.ethereum.request({ method: "eth_chainId" })
-              chainId = Number.parseInt(chainId, 16)
+              // Get chain ID (explicitly set chainId as a string first)
+              const chainIdHex: string = await window.ethereum.request({ method: "eth_chainId" });
+              chainId = Number.parseInt(chainIdHex, 16); // Parse the hex string to a number
             } catch (error) {
-              throw new Error("Failed to connect to MetaMask")
+              throw new Error("Failed to connect to MetaMask");
             }
           } else {
             // Mock connection for other wallet types
-            address = `0x${Math.random().toString(36).substring(2, 10)}...${Math.random().toString(36).substring(2, 10)}`
-            chainId = 56 // Default to BSC
+            address = `0x${Math.random().toString(36).substring(2, 10)}...${Math.random().toString(36).substring(2, 10)}`;
+            chainId = 56; // Default to BSC
           }
 
           // Create new connection
@@ -91,32 +91,32 @@ export const useWalletStore = create<WalletState>()(
             connectedAt: new Date().toISOString(),
             lastActive: new Date().toISOString(),
             preferredChain: "BSC", // Default to BSC
-          }
+          };
 
           // Update connections
           set((state) => ({
             connections: [...state.connections.filter((conn) => conn.userId !== userId), newConnection],
             isConnecting: false,
-          }))
+          }));
 
-          return true
+          return true;
         } catch (error) {
           set({
             isConnecting: false,
             error: error instanceof Error ? error.message : "Unknown error",
-          })
-          return false
+          });
+          return false;
         }
       },
 
       disconnectWallet: (userId) => {
         set((state) => ({
           connections: state.connections.filter((conn) => conn.userId !== userId),
-        }))
+        }));
       },
 
       getWalletConnection: (userId) => {
-        return get().connections.find((conn) => conn.userId === userId)
+        return get().connections.find((conn) => conn.userId === userId);
       },
 
       updateLastActive: (userId) => {
@@ -129,7 +129,7 @@ export const useWalletStore = create<WalletState>()(
                 }
               : conn,
           ),
-        }))
+        }));
       },
 
       setPreferredChain: (userId, chain) => {
@@ -142,15 +142,15 @@ export const useWalletStore = create<WalletState>()(
                 }
               : conn,
           ),
-        }))
+        }));
       },
 
       switchChain: async (userId, chainName) => {
-        const connection = get().getWalletConnection(userId)
-        if (!connection) return false
+        const connection = get().getWalletConnection(userId);
+        if (!connection) return false;
 
-        const chain = getChainByName(chainName)
-        if (!chain) return false
+        const chain = getChainByName(chainName);
+        if (!chain) return false;
 
         try {
           if (connection.type === "METAMASK" && window.ethereum) {
@@ -159,7 +159,7 @@ export const useWalletStore = create<WalletState>()(
               await window.ethereum.request({
                 method: "wallet_switchEthereumChain",
                 params: [{ chainId: `0x${chain.id.toString(16)}` }],
-              })
+              });
             } catch (switchError: any) {
               // This error code indicates that the chain has not been added to MetaMask
               if (switchError.code === 4902) {
@@ -178,9 +178,9 @@ export const useWalletStore = create<WalletState>()(
                       blockExplorerUrls: [chain.blockExplorerUrl],
                     },
                   ],
-                })
+                });
               } else {
-                throw switchError
+                throw switchError;
               }
             }
 
@@ -195,9 +195,9 @@ export const useWalletStore = create<WalletState>()(
                     }
                   : conn,
               ),
-            }))
+            }));
 
-            return true
+            return true;
           } else {
             // For other wallet types, just update the preferred chain
             set((state) => ({
@@ -209,58 +209,58 @@ export const useWalletStore = create<WalletState>()(
                     }
                   : conn,
               ),
-            }))
-            return true
+            }));
+            return true;
           }
         } catch (error) {
           set({
             error: error instanceof Error ? error.message : "Failed to switch chain",
-          })
-          return false
+          });
+          return false;
         }
       },
 
       getCurrentChain: (userId) => {
-        const connection = get().getWalletConnection(userId)
-        if (!connection) return null
+        const connection = get().getWalletConnection(userId);
+        if (!connection) return null;
 
-        const chain = getChainById(connection.chainId)
-        return chain ? Object.keys(chains).find((key) => chains[key].id === chain.id) || null : null
+        const chain = getChainById(connection.chainId);
+        return chain ? Object.keys(chains).find((key) => chains[key].id === chain.id) || null : null;
       },
 
       addPendingTransaction: (txHash) => {
         set((state) => ({
           pendingTransactions: [...state.pendingTransactions, txHash],
-        }))
+        }));
       },
 
       removePendingTransaction: (txHash) => {
         set((state) => ({
           pendingTransactions: state.pendingTransactions.filter((hash) => hash !== txHash),
-        }))
+        }));
       },
 
       hasPendingTransactions: () => {
-        return get().pendingTransactions.length > 0
+        return get().pendingTransactions.length > 0;
       },
 
       setConnecting: (isConnecting) => {
-        set({ isConnecting })
+        set({ isConnecting });
       },
 
       setError: (error) => {
-        set({ error })
+        set({ error });
       },
     }),
     {
       name: "whalebux-wallet-storage",
     },
   ),
-)
+);
 
 // Add window.ethereum type for TypeScript
 declare global {
   interface Window {
-    ethereum?: any
+    ethereum?: any;
   }
 }
