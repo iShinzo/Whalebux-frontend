@@ -47,6 +47,8 @@ export const Dashboard = () => {
 
   useEffect(() => {
     if (user && user.telegramId) {
+      console.log("User object:", user); // Debugging: Log the user object to inspect its structure
+
       // Update the user store with the user data from the API
       const userData: Partial<UserData> = {
         userId: user.userId,
@@ -54,19 +56,19 @@ export const Dashboard = () => {
         username: user.username || "Unknown", // Provide default value
         firstName: user.firstName || "Unknown",
         lastName: user.lastName || "Unknown",
-        level: user.level || 0, // Default to 0 if undefined
-        experience: user.experience || 0, // Default to 0 if undefined
-        wbuxDollars: user.wbuxDollars || 0,
-        wbuxBalance: user.wbuxBalance || 0,
-        loginStreak: user.loginStreak || 0,
-        referralCode: user.referralCode || "",
-        referralCount: user.referralCount || 0,
-        lastLogin: user.lastLogin || "",
-        miningRateLevel: user.miningRateLevel || 0,
-        miningBoostLevel: user.miningBoostLevel || 0,
-        miningTimeLevel: user.miningTimeLevel || 0,
-        nftSlotLevel: user.nftSlotLevel || 0,
-        completedTasks: user.completedTasks || [],
+        level: user?.level || 0, // Use optional chaining and fallback value
+        experience: user?.experience || 0, // Use optional chaining and fallback value
+        wbuxDollars: user?.wbuxDollars || 0,
+        wbuxBalance: user?.wbuxBalance || 0,
+        loginStreak: user?.loginStreak || 0,
+        referralCode: user?.referralCode || "",
+        referralCount: user?.referralCount || 0,
+        lastLogin: user?.lastLogin || "",
+        miningRateLevel: user?.miningRateLevel || 0,
+        miningBoostLevel: user?.miningBoostLevel || 0,
+        miningTimeLevel: user?.miningTimeLevel || 0,
+        nftSlotLevel: user?.nftSlotLevel || 0,
+        completedTasks: user?.completedTasks || [],
       };
 
       setUser(userData); // Use Partial<UserData> to match the expected type
