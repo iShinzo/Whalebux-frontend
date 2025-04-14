@@ -4,8 +4,8 @@ const nextConfig = {
     return [
       {
         source: '/',
-        destination: '/page',
-        permanent: true, // Set this to true if the redirect is permanent.
+        destination: '/', // Keep this if your main page is `app/page.tsx`
+        permanent: true, // Set this to true for permanent redirect
       },
     ];
   },
