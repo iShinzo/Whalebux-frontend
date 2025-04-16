@@ -3,7 +3,6 @@
 import { useEffect, useState } from "react"
 import { useRouter } from "next/navigation"
 import { useUserStore } from "../../lib/stores/userStore"
-import { useNFTStore, initializeNFTs } from "../../lib/stores/nftStore"
 import NFTGrid from "../../components/nft/NFTGrid"
 import WalletConnect from "../../components/wallet/WalletConnect"
 import WalletBalance from "../../components/wallet/WalletBalance"
