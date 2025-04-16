@@ -119,6 +119,133 @@ export const useNFTStore = create<NFTState>()(
         };
         set((state) => ({ nfts: [...state.nfts, newNFT] }));
       },
+      listForSale: (nftId, price, priceType) => {
+        set((state) => ({
+          nfts: state.nfts.map((nft) =>
+            nft.id === nftId
+              ? { ...nft, status: "FOR_SALE", price, priceType }
+              : nft
+          ),
+        }));
+      },
+      listForAuction: (nftId, startingPrice, duration, priceType) => {
+        const endTime = new Date();
+        endTime.setHours(endTime.getHours() + duration);
+        set((state) => ({
+          nfts: state.nfts.map((nft) =>
+            nft.id === nftId
+              ? {
+                  ...nft,
+                  status: "AUCTION",
+                  price: startingPrice,
+                  priceType,
+                  auctionEndTime: endTime.toISOString(),
+                }
+              : nft
+          ),
+        }));
+      },
+      cancelListing: (nftId) => {
+        set((state) => ({
+          nfts: state.nfts.map((nft) =>
+            nft.id === nftId
+              ? { ...nft, status: "OWNED", price: undefined, priceType: undefined }
+              : nft
+          ),
+        }));
+      },
+      buyNFT: (nftId, buyerId, buyerName) => {
+        set((state) => ({
+          nfts: state.nfts.map((nft) =>
+            nft.id === nftId
+              ? { ...nft, ownerId: buyerId, ownerName: buyerName, status: "OWNED" }
+              : nft
+          ),
+        }));
+      },
+
+      // Auction and Activation management
+      placeBid: (nftId, bidderId, bidderName, amount) => {
+        const nft = get().nfts.find((n) => n.id === nftId);
+        if (!nft || nft.status !== "AUCTION") return;
+
+        set((state) => ({
+          bids: [
+            ...state.bids,
+            { id: `bid_${Math.random().toString(36).substring(2, 9)}`, nftId, bidderId, bidderName, amount, timestamp: new Date().toISOString() },
+          ],
+        }));
+      },
+      getHighestBid: (nftId) => {
+        const bids = get().bids.filter((bid) => bid.nftId === nftId);
+        return bids.reduce((prev, current) =>
+          current.amount > prev.amount ? current : prev
+        );
+      },
+      finalizeAuction: (nftId) => {
+        // Logic to finalize auction
+      },
+      activateNFT: (nftId) => {
+        // Logic to activate NFT
+      },
+      deactivateNFT: (nftId) => {
+        // Logic to deactivate NFT
+      },
+      getActiveNFTs: (userId) => {
+        // Returns active NFTs
+        return get().nfts.filter((nft) => nft.ownerId === userId && nft.status === "ACTIVATED");
+      },
+
+      // Queries
+      getOwnedNFTs: (userId) => get().nfts.filter((nft) => nft.ownerId === userId),
+      getMarketplaceNFTs: () => get().nfts.filter((nft) => nft.status === "FOR_SALE"),
+      getActiveAuctions: () => get().nfts.filter((nft) => nft.status === "AUCTION"),
+      getNFTsByRarity: (rarity) => get().nfts.filter((nft) => nft.rarity === rarity),
+      getNFTsByType: (type) => get().nfts.filter((nft) => nft.type === type),
+      getNFTById: (id) => get().nfts.find((nft) => nft.id === id),
+      getBidsForNFT: (nftId) => get().bids.filter((bid) => bid.nftId === nftId),
+      getBidsByUser: (userId) => get().bids.filter((bid) => bid.bidderId === userId),
+
+      // Wallet Integration
+      connectWallet: (address, userId) => {
+        set((state) => ({
+          wallets: [...state.wallets, { userId, address }],
+        }));
+      },
+      disconnectWallet: (userId) => {
+        set((state) => ({
+          wallets: state.wallets.filter((wallet) => wallet.userId !== userId),
+        }));
+      },
+      getWalletAddress: (userId) => {
+        const wallet = get().wallets.find((w) => w.userId === userId);
+        return wallet ? wallet.address : null;
+      },
+
+      // Total Boost Calculation
+      calculateTotalBoost: (userId) => {
+        const activeNFTs = get().getActiveNFTs(userId);
+        return activeNFTs.reduce(
+          (totals, nft) => {
+            switch (nft.boost.type) {
+              case "MINING_RATE":
+                totals.miningRate += nft.boost.value;
+                break;
+              case "MINING_TIME":
+                totals.miningTime += nft.boost.value;
+                break;
+              case "REWARD_MULTIPLIER":
+                totals.rewardMultiplier += nft.boost.value;
+                break;
+              case "SPECIAL":
+                totals.special += nft.boost.value;
+                break;
+            }
+            return totals;
+          },
+          { miningRate: 0, miningTime: 0, rewardMultiplier: 0, special: 0 }
+        );
+      },
 
       // NFT Initialization
       initializeNFTs: () => {
@@ -164,11 +291,9 @@ export const useNFTStore = create<NFTState>()(
           sampleNFTs.forEach((nft) => get().addNFT(nft));
         }
       },
-
-      // Other functionality remains unchanged
     }),
     {
       name: "whalebux-nft-storage",
-    },
-  ),
+    }
+  )
 );
