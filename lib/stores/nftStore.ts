@@ -2,7 +2,6 @@
 
 import { create } from "zustand";
 import { persist } from "zustand/middleware";
-import { useUserStore } from "./userStore";
 
 export type NFTRarity = "GREEN" | "BLUE" | "PURPLE" | "GOLD" | "WHITE";
 export type NFTType = "MINING_BOOST" | "TIME_BOOST" | "REWARD_BOOST" | "SPECIAL" | "COLLECTOR";
@@ -10,7 +9,7 @@ export type NFTStatus = "OWNED" | "FOR_SALE" | "AUCTION" | "ACTIVATED";
 
 export interface NFTBoost {
   type: "MINING_RATE" | "MINING_TIME" | "REWARD_MULTIPLIER" | "SPECIAL";
-  value: number; // Percentage boost or special value
+  value: number;
   duration?: number; // Duration in days, undefined means permanent
 }
 
@@ -33,7 +32,7 @@ export interface NFT {
   highestBidder?: string;
   highestBidderName?: string;
   activatedUntil?: string;
-  tokenId?: string; // Blockchain token ID if applicable
+  tokenId?: string;
 }
 
 export interface Bid {
@@ -45,7 +44,6 @@ export interface Bid {
   timestamp: string;
 }
 
-// Define the wallet mapping type
 interface Wallet {
   userId: string;
   address: string;
@@ -119,8 +117,133 @@ export const useNFTStore = create<NFTState>()(
         };
         set((state) => ({ nfts: [...state.nfts, newNFT] }));
       },
+      listForSale: (nftId, price, priceType) => {
+        set((state) => ({
+          nfts: state.nfts.map((nft) =>
+            nft.id === nftId ? { ...nft, status: "FOR_SALE", price, priceType } : nft
+          ),
+        }));
+      },
+      listForAuction: (nftId, startingPrice, duration, priceType) => {
+        const endTime = new Date();
+        endTime.setHours(endTime.getHours() + duration);
+        set((state) => ({
+          nfts: state.nfts.map((nft) =>
+            nft.id === nftId
+              ? { ...nft, status: "AUCTION", price: startingPrice, priceType, auctionEndTime: endTime.toISOString() }
+              : nft
+          ),
+        }));
+      },
+      cancelListing: (nftId) => {
+        set((state) => ({
+          nfts: state.nfts.map((nft) =>
+            nft.id === nftId ? { ...nft, status: "OWNED", price: undefined, priceType: undefined } : nft
+          ),
+        }));
+      },
+      buyNFT: (nftId, buyerId, buyerName) => {
+        set((state) => ({
+          nfts: state.nfts.map((nft) =>
+            nft.id === nftId ? { ...nft, ownerId: buyerId, ownerName: buyerName, status: "OWNED" } : nft
+          ),
+        }));
+      },
 
-      // Other NFT-related methods...
+      // Auction Management
+      placeBid: (nftId, bidderId, bidderName, amount) => {
+        set((state) => ({
+          bids: [
+            ...state.bids,
+            { id: `bid_${Math.random().toString(36).substring(2, 9)}`, nftId, bidderId, bidderName, amount, timestamp: new Date().toISOString() },
+          ],
+        }));
+      },
+      getHighestBid: (nftId) => {
+        const bids = get().bids.filter((bid) => bid.nftId === nftId);
+        return bids.reduce((prev, current) => (current.amount > prev.amount ? current : prev), bids[0]);
+      },
+      finalizeAuction: (nftId) => {
+        const highestBid = get().getHighestBid(nftId);
+        if (highestBid) {
+          set((state) => ({
+            nfts: state.nfts.map((nft) =>
+              nft.id === nftId
+                ? { ...nft, ownerId: highestBid.bidderId, ownerName: highestBid.bidderName, status: "OWNED" }
+                : nft
+            ),
+            bids: state.bids.filter((bid) => bid.nftId !== nftId),
+          }));
+        }
+      },
+
+      // NFT Activation
+      activateNFT: (nftId) => {
+        set((state) => ({
+          nfts: state.nfts.map((nft) =>
+            nft.id === nftId ? { ...nft, status: "ACTIVATED", activatedUntil: new Date().toISOString() } : nft
+          ),
+        }));
+      },
+      deactivateNFT: (nftId) => {
+        set((state) => ({
+          nfts: state.nfts.map((nft) =>
+            nft.id === nftId ? { ...nft, status: "OWNED", activatedUntil: undefined } : nft
+          ),
+        }));
+      },
+      getActiveNFTs: (userId) => get().nfts.filter((nft) => nft.ownerId === userId && nft.status === "ACTIVATED"),
+
+      // Queries
+      getOwnedNFTs: (userId) => get().nfts.filter((nft) => nft.ownerId === userId),
+      getMarketplaceNFTs: () => get().nfts.filter((nft) => nft.status === "FOR_SALE"),
+      getActiveAuctions: () => get().nfts.filter((nft) => nft.status === "AUCTION"),
+      getNFTsByRarity: (rarity) => get().nfts.filter((nft) => nft.rarity === rarity),
+      getNFTsByType: (type) => get().nfts.filter((nft) => nft.type === type),
+      getNFTById: (id) => get().nfts.find((nft) => nft.id === id),
+      getBidsForNFT: (nftId) => get().bids.filter((bid) => bid.nftId === nftId),
+      getBidsByUser: (userId) => get().bids.filter((bid) => bid.bidderId === userId),
+
+      // Wallet Integration
+      connectWallet: (address, userId) => {
+        set((state) => ({
+          wallets: [...state.wallets, { userId, address }],
+        }));
+      },
+      disconnectWallet: (userId) => {
+        set((state) => ({
+          wallets: state.wallets.filter((wallet) => wallet.userId !== userId),
+        }));
+      },
+      getWalletAddress: (userId) => {
+        const wallet = get().wallets.find((w) => w.userId === userId);
+        return wallet ? wallet.address : null;
+      },
+
+      // Total Boost Calculation
+      calculateTotalBoost: (userId) => {
+        const activeNFTs = get().getActiveNFTs(userId);
+        return activeNFTs.reduce(
+          (totals, nft) => {
+            switch (nft.boost.type) {
+              case "MINING_RATE":
+                totals.miningRate += nft.boost.value;
+                break;
+              case "MINING_TIME":
+                totals.miningTime += nft.boost.value;
+                break;
+              case "REWARD_MULTIPLIER":
+                totals.rewardMultiplier += nft.boost.value;
+                break;
+              case "SPECIAL":
+                totals.special += nft.boost.value;
+                break;
+            }
+            return totals;
+          },
+          { miningRate: 0, miningTime: 0, rewardMultiplier: 0, special: 0 }
+        );
+      },
 
       // NFT Initialization
       initializeNFTs: () => {
@@ -135,7 +258,7 @@ export const useNFTStore = create<NFTState>()(
               boost: {
                 type: "MINING_RATE",
                 value: 10,
-                duration: 7, // 7 days
+                duration: 7,
               },
             },
             {
@@ -147,7 +270,7 @@ export const useNFTStore = create<NFTState>()(
               boost: {
                 type: "MINING_TIME",
                 value: 15,
-                duration: 7, // 7 days
+                duration: 7,
               },
             },
             {
@@ -159,7 +282,7 @@ export const useNFTStore = create<NFTState>()(
               boost: {
                 type: "REWARD_MULTIPLIER",
                 value: 20,
-                duration: 7, // 7 days
+                duration: 7,
               },
             },
           ];
