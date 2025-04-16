@@ -105,7 +105,7 @@ export default function NFTMarketplace() {
                             <div className="text-green-400 font-bold text-lg">
                               +
                               {activeNFTs.reduce(
-                                (total, nft) => total + (nft.boost.type === "MINING_RATE" ? nft.boost.value : 0),
+                                (total: number, nft: any) => total + (nft.boost.type === "MINING_RATE" ? nft.boost.value : 0),
                                 0
                               )}
                               %
@@ -116,7 +116,7 @@ export default function NFTMarketplace() {
                             <div className="text-green-400 font-bold text-lg">
                               +
                               {activeNFTs.reduce(
-                                (total, nft) => total + (nft.boost.type === "MINING_TIME" ? nft.boost.value : 0),
+                                (total: number, nft: any) => total + (nft.boost.type === "MINING_TIME" ? nft.boost.value : 0),
                                 0
                               )}
                               %
@@ -127,7 +127,7 @@ export default function NFTMarketplace() {
                             <div className="text-green-400 font-bold text-lg">
                               +
                               {activeNFTs.reduce(
-                                (total, nft) => total + (nft.boost.type === "REWARD_MULTIPLIER" ? nft.boost.value : 0),
+                                (total: number, nft: any) => total + (nft.boost.type === "REWARD_MULTIPLIER" ? nft.boost.value : 0),
                                 0
                               )}
                               %
@@ -138,7 +138,7 @@ export default function NFTMarketplace() {
                             <div className="text-green-400 font-bold text-lg">
                               +
                               {activeNFTs.reduce(
-                                (total, nft) => total + (nft.boost.type === "SPECIAL" ? nft.boost.value : 0),
+                                (total: number, nft: any) => total + (nft.boost.type === "SPECIAL" ? nft.boost.value : 0),
                                 0
                               )}
                               %
