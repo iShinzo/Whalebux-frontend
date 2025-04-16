@@ -69,6 +69,7 @@ interface NFTState {
   listForAuction: (nftId: string, startingPrice: number, endTime: string) => void;
   cancelListing: (nftId: string) => void;
   buyNFT: (nftId: string, buyerId: string, buyerName: string) => void;
+  getBidsForNFT: (nftId: string) => Bid[]; // Added here
 
   // Queries
   getOwnedNFTs: (userId: string) => NFT[];
@@ -160,6 +161,9 @@ export const useNFTStore = create<NFTState>()(
               : nft
           ),
         }));
+      },
+      getBidsForNFT: (nftId) => {
+        return get().bids.filter((bid) => bid.nftId === nftId); // Implementation added here
       },
 
       // Queries
