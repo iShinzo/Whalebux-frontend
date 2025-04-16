@@ -1,67 +1,50 @@
-"use client";
+"use client"
 
-import { useState } from "react";
-import { useRouter } from "next/navigation";
-import { useUserStore } from "../../lib/stores/userStore";
-import TaskNavigation from "../../components/tasks/TaskNavigation";
-import PlaceTask from "../../components/tasks/PlaceTask";
-import TaskCatalog from "../../components/tasks/TaskCatalog";
-import WhaleBuxTasks from "../../components/tasks/WhaleBuxTasks";
-import MyTasks from "../../components/tasks/MyTasks";
-import UserStats from "../../components/mining/UserStats";
+import { useState } from "react"
+import { useRouter } from "next/navigation"
+import { useUserStore } from "../../lib/stores/userStore"
+import TaskNavigation from "../../components/tasks/TaskNavigation"
+import PlaceTask from "../../components/tasks/PlaceTask"
+import TaskCatalog from "../../components/tasks/TaskCatalog"
+import WhaleBuxTasks from "../../components/tasks/WhaleBuxTasks"
+import MyTasks from "../../components/tasks/MyTasks"
+import UserStats from "../../components/mining/UserStats"
 
 export default function Tasks() {
-  const router = useRouter();
-  const [activeSection, setActiveSection] = useState<
-    "place-task" | "catalog" | "whalebux" | "my-tasks"
-  >("catalog");
-  const { wbuxBalance, wbuxDollars, username } = useUserStore();
+  const router = useRouter()
+  const [activeSection, setActiveSection] = useState<"place-task" | "catalog" | "whalebux" | "my-tasks">("catalog")
+  const { wbuxBalance, wbuxDollars, username } = useUserStore()
 
-  // Function to render the content based on the active section
   const renderContent = () => {
     switch (activeSection) {
       case "place-task":
-        return <PlaceTask />;
+        return <PlaceTask />
       case "catalog":
-        return <TaskCatalog />;
+        return <TaskCatalog />
       case "whalebux":
-        return <WhaleBuxTasks />;
+        return <WhaleBuxTasks />
       case "my-tasks":
-        return <MyTasks />;
+        return <MyTasks />
       default:
-        return null;
+        return null
     }
-  };
+  }
 
   return (
     <div className="min-h-screen bg-gray-900 pb-20">
-      {/* User Stats Section */}
-      <UserStats
-        wbuxBalance={wbuxBalance}
-        wbuxDollars={wbuxDollars}
-        username={username}
-      />
+      <UserStats wbuxBalance={wbuxBalance} wbuxDollars={wbuxDollars} username={username} />
 
       <div className="max-w-md mx-auto p-4">
-        {/* Header Section */}
         <div className="flex items-center mb-6">
-          <button
-            onClick={() => router.push("/")}
-            className="text-gray-400 hover:text-white mr-4"
-            aria-label="Go back to the home page"
-          >
+          <button onClick={() => router.push("/")} className="text-gray-400 hover:text-white mr-4">
             ← Back
           </button>
           <h1 className="text-2xl font-bold text-white">Task Marketplace</h1>
         </div>
 
-        {/* Navigation and Content Section */}
-        <TaskNavigation
-          activeSection={activeSection}
-          onSectionChange={setActiveSection}
-        />
+        <TaskNavigation activeSection={activeSection} onSectionChange={setActiveSection} />
         {renderContent()}
       </div>
     </div>
-  );
+  )
 }
