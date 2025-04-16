@@ -66,6 +66,7 @@ interface NFTState {
   activateNFT: (nftId: string) => void;
   deactivateNFT: (nftId: string) => void;
   listForSale: (nftId: string, price: number, priceType: "DOLLARS" | "TOKENS") => void;
+  listForAuction: (nftId: string, startingPrice: number, endTime: string) => void;
 
   // Queries
   getOwnedNFTs: (userId: string) => NFT[];
@@ -115,6 +116,20 @@ export const useNFTStore = create<NFTState>()(
           nfts: state.nfts.map((nft) =>
             nft.id === nftId
               ? { ...nft, status: "FOR_SALE", price, priceType }
+              : nft
+          ),
+        }));
+      },
+      listForAuction: (nftId, startingPrice, endTime) => {
+        set((state) => ({
+          nfts: state.nfts.map((nft) =>
+            nft.id === nftId
+              ? {
+                  ...nft,
+                  status: "AUCTION",
+                  price: startingPrice,
+                  auctionEndTime: endTime,
+                }
               : nft
           ),
         }));
