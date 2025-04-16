@@ -1,28 +1,28 @@
-"use client"
+"use client";
 
-import { useEffect, useState } from "react"
-import { useRouter } from "next/navigation"
-import { useUserStore } from "../../lib/stores/userStore"
-import { useNFTStore, initializeNFTs } from "../../lib/stores/nftStore"
-import NFTGrid from "../../components/nft/NFTGrid"
-import WalletConnect from "../../components/wallet/WalletConnect"
-import WalletBalance from "../../components/wallet/WalletBalance"
+import { useEffect, useState } from "react";
+import { useRouter } from "next/navigation";
+import { useUserStore } from "../../lib/stores/userStore";
+import { useNFTStore, initializeNFTs } from "../../lib/stores/nftStore";
+import NFTGrid from "../../components/nft/NFTGrid";
+import WalletConnect from "../../components/wallet/WalletConnect";
+import WalletBalance from "../../components/wallet/WalletBalance";
 
 export default function NFTMarketplace() {
-  const router = useRouter()
-  const { userId } = useUserStore()
-  const { getMarketplaceNFTs, getOwnedNFTs, getActiveNFTs } = useNFTStore()
+  const router = useRouter();
+  const { userId } = useUserStore();
+  const { getMarketplaceNFTs, getOwnedNFTs, getActiveNFTs } = useNFTStore();
 
-  const [activeTab, setActiveTab] = useState<"marketplace" | "my-nfts" | "active-nfts">("marketplace")
+  const [activeTab, setActiveTab] = useState<"marketplace" | "my-nfts" | "active-nfts">("marketplace");
 
   // Initialize sample NFTs
   useEffect(() => {
-    initializeNFTs()
-  }, [])
+    initializeNFTs();
+  }, []);
 
-  const marketplaceNFTs = getMarketplaceNFTs()
-  const ownedNFTs = userId ? getOwnedNFTs(userId) : []
-  const activeNFTs = userId ? getActiveNFTs(userId) : []
+  const marketplaceNFTs = getMarketplaceNFTs();
+  const ownedNFTs = userId ? getOwnedNFTs(userId) : [];
+  const activeNFTs = userId ? getActiveNFTs(userId) : [];
 
   return (
     <div className="min-h-screen bg-gray-900 pb-20">
@@ -106,7 +106,7 @@ export default function NFTMarketplace() {
                               +
                               {activeNFTs.reduce(
                                 (total, nft) => total + (nft.boost.type === "MINING_RATE" ? nft.boost.value : 0),
-                                0,
+                                0
                               )}
                               %
                             </div>
@@ -117,7 +117,7 @@ export default function NFTMarketplace() {
                               +
                               {activeNFTs.reduce(
                                 (total, nft) => total + (nft.boost.type === "MINING_TIME" ? nft.boost.value : 0),
-                                0,
+                                0
                               )}
                               %
                             </div>
@@ -128,7 +128,7 @@ export default function NFTMarketplace() {
                               +
                               {activeNFTs.reduce(
                                 (total, nft) => total + (nft.boost.type === "REWARD_MULTIPLIER" ? nft.boost.value : 0),
-                                0,
+                                0
                               )}
                               %
                             </div>
@@ -139,7 +139,7 @@ export default function NFTMarketplace() {
                               +
                               {activeNFTs.reduce(
                                 (total, nft) => total + (nft.boost.type === "SPECIAL" ? nft.boost.value : 0),
-                                0,
+                                0
                               )}
                               %
                             </div>
@@ -197,5 +197,5 @@ export default function NFTMarketplace() {
         </div>
       </div>
     </div>
-  )
+  );
 }
