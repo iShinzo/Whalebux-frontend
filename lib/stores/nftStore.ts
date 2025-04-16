@@ -68,6 +68,7 @@ interface NFTState {
   listForSale: (nftId: string, price: number, priceType: "DOLLARS" | "TOKENS") => void;
   listForAuction: (nftId: string, startingPrice: number, endTime: string) => void;
   cancelListing: (nftId: string) => void;
+  buyNFT: (nftId: string, buyerId: string, buyerName: string) => void;
 
   // Queries
   getOwnedNFTs: (userId: string) => NFT[];
@@ -140,6 +141,22 @@ export const useNFTStore = create<NFTState>()(
           nfts: state.nfts.map((nft) =>
             nft.id === nftId
               ? { ...nft, status: "OWNED", price: undefined, priceType: undefined, auctionEndTime: undefined }
+              : nft
+          ),
+        }));
+      },
+      buyNFT: (nftId, buyerId, buyerName) => {
+        set((state) => ({
+          nfts: state.nfts.map((nft) =>
+            nft.id === nftId
+              ? {
+                  ...nft,
+                  status: "OWNED",
+                  ownerId: buyerId,
+                  ownerName: buyerName,
+                  price: undefined,
+                  priceType: undefined,
+                }
               : nft
           ),
         }));
