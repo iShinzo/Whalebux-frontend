@@ -63,6 +63,8 @@ interface NFTState {
 
   // NFT Management
   addNFT: (nft: Omit<NFT, "id" | "mintDate" | "status" | "ownerId" | "ownerName">) => void;
+  activateNFT: (nftId: string) => void;
+  deactivateNFT: (nftId: string) => void;
 
   // Queries
   getOwnedNFTs: (userId: string) => NFT[];
@@ -92,6 +94,20 @@ export const useNFTStore = create<NFTState>()(
           ...nftData,
         };
         set((state) => ({ nfts: [...state.nfts, newNFT] }));
+      },
+      activateNFT: (nftId) => {
+        set((state) => ({
+          nfts: state.nfts.map((nft) =>
+            nft.id === nftId ? { ...nft, status: "ACTIVATED" } : nft
+          ),
+        }));
+      },
+      deactivateNFT: (nftId) => {
+        set((state) => ({
+          nfts: state.nfts.map((nft) =>
+            nft.id === nftId ? { ...nft, status: "OWNED" } : nft
+          ),
+        }));
       },
 
       // Queries
