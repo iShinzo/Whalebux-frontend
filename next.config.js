@@ -1,13 +1,9 @@
 /** @type {import('next').NextConfig} */
 const nextConfig = {
+  // Configuration for redirects
   async redirects() {
-    return [
-      {
-        source: '/',
-        destination: '/', // Keep this if your main page is `app/page.tsx`
-        permanent: true, // Set this to true for permanent redirect
-      },
-    ];
+    // Example: Add meaningful redirects here in the future
+    return [];
   },
 };
 
