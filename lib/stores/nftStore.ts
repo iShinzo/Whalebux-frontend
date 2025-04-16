@@ -9,7 +9,7 @@ export type NFTStatus = "OWNED" | "FOR_SALE" | "AUCTION" | "ACTIVATED";
 
 export interface NFTBoost {
   type: "MINING_RATE" | "MINING_TIME" | "REWARD_MULTIPLIER" | "SPECIAL";
-  value: number;
+  value: number; 
   duration?: number; // Duration in days, undefined means permanent
 }
 
@@ -32,7 +32,7 @@ export interface NFT {
   highestBidder?: string;
   highestBidderName?: string;
   activatedUntil?: string;
-  tokenId?: string;
+  tokenId?: string; // Blockchain token ID if applicable
 }
 
 export interface Bid {
@@ -57,42 +57,12 @@ interface NFTState {
   // NFT Management
   addNFT: (nft: Omit<NFT, "id" | "mintDate" | "status" | "ownerId" | "ownerName">) => void;
   listForSale: (nftId: string, price: number, priceType: "DOLLARS" | "TOKENS") => void;
-  listForAuction: (nftId: string, startingPrice: number, duration: number, priceType: "DOLLARS" | "TOKENS") => void;
   cancelListing: (nftId: string) => void;
-  buyNFT: (nftId: string, buyerId: string, buyerName: string) => void;
-
-  // Auction Management
-  placeBid: (nftId: string, bidderId: string, bidderName: string, amount: number) => void;
-  getHighestBid: (nftId: string) => Bid | undefined;
-  finalizeAuction: (nftId: string) => void;
-
-  // NFT Activation
-  activateNFT: (nftId: string) => void;
-  deactivateNFT: (nftId: string) => void;
-  getActiveNFTs: (userId: string) => NFT[];
 
   // Queries
   getOwnedNFTs: (userId: string) => NFT[];
   getMarketplaceNFTs: () => NFT[];
-  getActiveAuctions: () => NFT[];
-  getNFTsByRarity: (rarity: NFTRarity) => NFT[];
-  getNFTsByType: (type: NFTType) => NFT[];
-  getNFTById: (id: string) => NFT | undefined;
-  getBidsForNFT: (nftId: string) => Bid[];
-  getBidsByUser: (userId: string) => Bid[];
-
-  // Wallet Integration
-  connectWallet: (address: string, userId: string) => void;
-  disconnectWallet: (userId: string) => void;
-  getWalletAddress: (userId: string) => string | null;
-
-  // Total Boost Calculation
-  calculateTotalBoost: (userId: string) => {
-    miningRate: number;
-    miningTime: number;
-    rewardMultiplier: number;
-    special: number;
-  };
+  getActiveNFTs: (userId: string) => NFT[]; // Added here
 
   // NFT Initialization
   initializeNFTs: () => void;
@@ -120,17 +90,8 @@ export const useNFTStore = create<NFTState>()(
       listForSale: (nftId, price, priceType) => {
         set((state) => ({
           nfts: state.nfts.map((nft) =>
-            nft.id === nftId ? { ...nft, status: "FOR_SALE", price, priceType } : nft
-          ),
-        }));
-      },
-      listForAuction: (nftId, startingPrice, duration, priceType) => {
-        const endTime = new Date();
-        endTime.setHours(endTime.getHours() + duration);
-        set((state) => ({
-          nfts: state.nfts.map((nft) =>
             nft.id === nftId
-              ? { ...nft, status: "AUCTION", price: startingPrice, priceType, auctionEndTime: endTime.toISOString() }
+              ? { ...nft, status: "FOR_SALE", price, priceType }
               : nft
           ),
         }));
@@ -138,112 +99,17 @@ export const useNFTStore = create<NFTState>()(
       cancelListing: (nftId) => {
         set((state) => ({
           nfts: state.nfts.map((nft) =>
-            nft.id === nftId ? { ...nft, status: "OWNED", price: undefined, priceType: undefined } : nft
+            nft.id === nftId
+              ? { ...nft, status: "OWNED", price: undefined, priceType: undefined }
+              : nft
           ),
         }));
       },
-      buyNFT: (nftId, buyerId, buyerName) => {
-        set((state) => ({
-          nfts: state.nfts.map((nft) =>
-            nft.id === nftId ? { ...nft, ownerId: buyerId, ownerName: buyerName, status: "OWNED" } : nft
-          ),
-        }));
-      },
-
-      // Auction Management
-      placeBid: (nftId, bidderId, bidderName, amount) => {
-        set((state) => ({
-          bids: [
-            ...state.bids,
-            { id: `bid_${Math.random().toString(36).substring(2, 9)}`, nftId, bidderId, bidderName, amount, timestamp: new Date().toISOString() },
-          ],
-        }));
-      },
-      getHighestBid: (nftId) => {
-        const bids = get().bids.filter((bid) => bid.nftId === nftId);
-        return bids.reduce((prev, current) => (current.amount > prev.amount ? current : prev), bids[0]);
-      },
-      finalizeAuction: (nftId) => {
-        const highestBid = get().getHighestBid(nftId);
-        if (highestBid) {
-          set((state) => ({
-            nfts: state.nfts.map((nft) =>
-              nft.id === nftId
-                ? { ...nft, ownerId: highestBid.bidderId, ownerName: highestBid.bidderName, status: "OWNED" }
-                : nft
-            ),
-            bids: state.bids.filter((bid) => bid.nftId !== nftId),
-          }));
-        }
-      },
-
-      // NFT Activation
-      activateNFT: (nftId) => {
-        set((state) => ({
-          nfts: state.nfts.map((nft) =>
-            nft.id === nftId ? { ...nft, status: "ACTIVATED", activatedUntil: new Date().toISOString() } : nft
-          ),
-        }));
-      },
-      deactivateNFT: (nftId) => {
-        set((state) => ({
-          nfts: state.nfts.map((nft) =>
-            nft.id === nftId ? { ...nft, status: "OWNED", activatedUntil: undefined } : nft
-          ),
-        }));
-      },
-      getActiveNFTs: (userId) => get().nfts.filter((nft) => nft.ownerId === userId && nft.status === "ACTIVATED"),
 
       // Queries
       getOwnedNFTs: (userId) => get().nfts.filter((nft) => nft.ownerId === userId),
       getMarketplaceNFTs: () => get().nfts.filter((nft) => nft.status === "FOR_SALE"),
-      getActiveAuctions: () => get().nfts.filter((nft) => nft.status === "AUCTION"),
-      getNFTsByRarity: (rarity) => get().nfts.filter((nft) => nft.rarity === rarity),
-      getNFTsByType: (type) => get().nfts.filter((nft) => nft.type === type),
-      getNFTById: (id) => get().nfts.find((nft) => nft.id === id),
-      getBidsForNFT: (nftId) => get().bids.filter((bid) => bid.nftId === nftId),
-      getBidsByUser: (userId) => get().bids.filter((bid) => bid.bidderId === userId),
-
-      // Wallet Integration
-      connectWallet: (address, userId) => {
-        set((state) => ({
-          wallets: [...state.wallets, { userId, address }],
-        }));
-      },
-      disconnectWallet: (userId) => {
-        set((state) => ({
-          wallets: state.wallets.filter((wallet) => wallet.userId !== userId),
-        }));
-      },
-      getWalletAddress: (userId) => {
-        const wallet = get().wallets.find((w) => w.userId === userId);
-        return wallet ? wallet.address : null;
-      },
-
-      // Total Boost Calculation
-      calculateTotalBoost: (userId) => {
-        const activeNFTs = get().getActiveNFTs(userId);
-        return activeNFTs.reduce(
-          (totals, nft) => {
-            switch (nft.boost.type) {
-              case "MINING_RATE":
-                totals.miningRate += nft.boost.value;
-                break;
-              case "MINING_TIME":
-                totals.miningTime += nft.boost.value;
-                break;
-              case "REWARD_MULTIPLIER":
-                totals.rewardMultiplier += nft.boost.value;
-                break;
-              case "SPECIAL":
-                totals.special += nft.boost.value;
-                break;
-            }
-            return totals;
-          },
-          { miningRate: 0, miningTime: 0, rewardMultiplier: 0, special: 0 }
-        );
-      },
+      getActiveNFTs: (userId) => get().nfts.filter((nft) => nft.ownerId === userId && nft.status === "ACTIVATED"), // Implemented here
 
       // NFT Initialization
       initializeNFTs: () => {
@@ -258,7 +124,7 @@ export const useNFTStore = create<NFTState>()(
               boost: {
                 type: "MINING_RATE",
                 value: 10,
-                duration: 7,
+                duration: 7, // 7 days
               },
             },
             {
@@ -270,7 +136,7 @@ export const useNFTStore = create<NFTState>()(
               boost: {
                 type: "MINING_TIME",
                 value: 15,
-                duration: 7,
+                duration: 7, // 7 days
               },
             },
             {
@@ -282,7 +148,7 @@ export const useNFTStore = create<NFTState>()(
               boost: {
                 type: "REWARD_MULTIPLIER",
                 value: 20,
-                duration: 7,
+                duration: 7, // 7 days
               },
             },
           ];
@@ -295,3 +161,6 @@ export const useNFTStore = create<NFTState>()(
     }
   )
 );
+
+// Export the initializeNFTs function for external use
+export const initializeNFTs = useNFTStore.getState().initializeNFTs;
