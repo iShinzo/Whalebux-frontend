@@ -1,6 +1,6 @@
 "use client"
 
-import { useState, useMemo } from "react"
+import { useState } from "react"
 import { useRouter } from "next/navigation"
 import { useUserStore } from "../../lib/stores/userStore"
 import {
@@ -17,23 +17,36 @@ type UpgradeType = "rate" | "boost" | "time" | "nft"
 
 export default function BoostPage() {
   const router = useRouter()
-  const {
-    wbuxDollars,
-    wbuxBalance,
-    miningRateLevel,
-    miningBoostLevel,
-    miningTimeLevel,
-    nftSlotLevel,
-    setUser,
-  } = useUserStore()
+  const { wbuxDollars, wbuxBalance, miningRateLevel, miningBoostLevel, miningTimeLevel, nftSlotLevel, setUser } =
+    useUserStore()
 
   const [activeTab, setActiveTab] = useState<UpgradeType>("rate")
   const [message, setMessage] = useState<{ type: "success" | "error"; text: string } | null>(null)
 
-  // Handle upgrade logic
   const handleUpgrade = (type: UpgradeType) => {
-    const currentLevel = getCurrentLevel(type)
-    const maxLevel = getMaxUpgradeLevel(type)
+    let currentLevel: number
+    let maxLevel: number
+
+    switch (type) {
+      case "rate":
+        currentLevel = miningRateLevel
+        maxLevel = MINING_RATE_UPGRADES.length
+        break
+      case "boost":
+        currentLevel = miningBoostLevel
+        maxLevel = MINING_BOOST_UPGRADES.length
+        break
+      case "time":
+        currentLevel = miningTimeLevel
+        maxLevel = MINING_TIME_UPGRADES.length
+        break
+      case "nft":
+        currentLevel = nftSlotLevel
+        maxLevel = NFT_SLOT_UPGRADES.length
+        break
+      default:
+        return
+    }
 
     // Check if already at max level
     if (currentLevel >= maxLevel) {
@@ -41,74 +54,79 @@ export default function BoostPage() {
       return
     }
 
-    // Check if user can afford the upgrade
-    const cost = getUpgradeCost(type, currentLevel)
+    // Get next level
+    const nextLevel = currentLevel + 1
+
+    // Check if user can afford upgrade
     if (!canAffordUpgrade(type, currentLevel, wbuxDollars, wbuxBalance)) {
       setMessage({ type: "error", text: "Cannot afford this upgrade!" })
       return
     }
 
+    // Get upgrade cost
+    const cost = getUpgradeCost(type, currentLevel)
+
     // Apply upgrade
-    const nextLevel = currentLevel + 1
-    applyUpgrade(type, nextLevel, cost)
+    switch (type) {
+      case "rate":
+        setUser({
+          miningRateLevel: nextLevel,
+          wbuxDollars: wbuxDollars - cost.dollars,
+          wbuxBalance: wbuxBalance - cost.tokens,
+        })
+        break
+      case "boost":
+        setUser({
+          miningBoostLevel: nextLevel,
+          wbuxDollars: wbuxDollars - cost.dollars,
+          wbuxBalance: wbuxBalance - cost.tokens,
+        })
+        break
+      case "time":
+        setUser({
+          miningTimeLevel: nextLevel,
+          wbuxDollars: wbuxDollars - cost.dollars,
+          wbuxBalance: wbuxBalance - cost.tokens,
+        })
+        break
+      case "nft":
+        setUser({
+          nftSlotLevel: nextLevel,
+          wbuxDollars: wbuxDollars - cost.dollars,
+          wbuxBalance: wbuxBalance - cost.tokens,
+        })
+        break
+    }
+
     setMessage({ type: "success", text: "Upgrade successful!" })
   }
 
-  // Get the current level for the given upgrade type
-  const getCurrentLevel = (type: UpgradeType) => {
-    switch (type) {
-      case "rate":
-        return miningRateLevel
-      case "boost":
-        return miningBoostLevel
-      case "time":
-        return miningTimeLevel
-      case "nft":
-        return nftSlotLevel
-      default:
-        return 0
-    }
-  }
-
-  // Apply the upgrade and update the user state
-  const applyUpgrade = (type: UpgradeType, nextLevel: number, cost: { dollars: number; tokens: number }) => {
-    const updatedState = {
-      wbuxDollars: wbuxDollars - cost.dollars,
-      wbuxBalance: wbuxBalance - cost.tokens,
-    }
-
-    switch (type) {
-      case "rate":
-        setUser({ ...updatedState, miningRateLevel: nextLevel })
-        break
-      case "boost":
-        setUser({ ...updatedState, miningBoostLevel: nextLevel })
-        break
-      case "time":
-        setUser({ ...updatedState, miningTimeLevel: nextLevel })
-        break
-      case "nft":
-        setUser({ ...updatedState, nftSlotLevel: nextLevel })
-        break
-    }
-  }
-
-  // Render an individual upgrade card
-  const renderUpgradeCard = (type: UpgradeType, title: string, description: string) => {
-    const currentLevel = getCurrentLevel(type)
+  const renderUpgradeCard = (type: UpgradeType, title: string, description: string, currentLevel: number) => {
     const maxLevel = getMaxUpgradeLevel(type)
     const isMaxLevel = currentLevel >= maxLevel
-    const cost = useMemo(() => getUpgradeCost(type, currentLevel), [type, currentLevel])
-    const canAfford = useMemo(
-      () => canAffordUpgrade(type, currentLevel, wbuxDollars, wbuxBalance),
-      [type, currentLevel, wbuxDollars, wbuxBalance]
-    )
+    const nextLevel = isMaxLevel ? currentLevel : currentLevel + 1
+    const cost = getUpgradeCost(type, currentLevel)
+    const canAfford = canAffordUpgrade(type, currentLevel, wbuxDollars, wbuxBalance)
 
-    const upgradeDetails = getUpgradeDetails(type, currentLevel)
+    let upgradeDetails = ""
+
+    switch (type) {
+      case "rate":
+        upgradeDetails = `+${MINING_RATE_UPGRADES[currentLevel]?.bonus || 0} WBUX/hr`
+        break
+      case "boost":
+        upgradeDetails = `+${MINING_BOOST_UPGRADES[currentLevel]?.bonus || 0}% boost`
+        break
+      case "time":
+        upgradeDetails = `-${MINING_TIME_UPGRADES[currentLevel]?.bonus || 0} minutes`
+        break
+      case "nft":
+        upgradeDetails = `+${NFT_SLOT_UPGRADES[currentLevel]?.slots || 0} slot`
+        break
+    }
 
     return (
       <div className="bg-gray-800 rounded-lg p-4 mb-6">
-        {/* Header */}
         <div className="flex justify-between items-start mb-4">
           <div>
             <h3 className="text-lg font-semibold text-white">{title}</h3>
@@ -119,7 +137,6 @@ export default function BoostPage() {
           </div>
         </div>
 
-        {/* Upgrade Details */}
         <div className="bg-gray-700 rounded-lg p-3 mb-4">
           <div className="flex justify-between items-center">
             <div>
@@ -130,14 +147,16 @@ export default function BoostPage() {
               <div>
                 <div className="text-gray-400 text-xs">Next Level</div>
                 <div className="text-green-400">
-                  {getUpgradeDetails(type, currentLevel + 1)}
+                  {type === "rate" && `+${MINING_RATE_UPGRADES[nextLevel - 1]?.bonus || 0} WBUX/hr`}
+                  {type === "boost" && `+${MINING_BOOST_UPGRADES[nextLevel - 1]?.bonus || 0}% boost`}
+                  {type === "time" && `-${MINING_TIME_UPGRADES[nextLevel - 1]?.bonus || 0} minutes`}
+                  {type === "nft" && `+${NFT_SLOT_UPGRADES[nextLevel - 1]?.slots || 0} slot`}
                 </div>
               </div>
             )}
           </div>
         </div>
 
-        {/* Upgrade Button */}
         {!isMaxLevel && (
           <div className="flex justify-between items-center">
             <div>
@@ -157,12 +176,16 @@ export default function BoostPage() {
             </div>
             <button
               onClick={() => handleUpgrade(type)}
-              disabled={!canAfford}
+              disabled={isMaxLevel || !canAfford}
               className={`px-4 py-2 rounded ${
-                canAfford ? "bg-green-600 hover:bg-green-500 text-white" : "bg-red-900 text-red-300 cursor-not-allowed"
+                isMaxLevel
+                  ? "bg-gray-600 text-gray-400 cursor-not-allowed"
+                  : canAfford
+                    ? "bg-green-600 hover:bg-green-500 text-white"
+                    : "bg-red-900 text-red-300 cursor-not-allowed"
               }`}
             >
-              Upgrade
+              {isMaxLevel ? "Maxed" : "Upgrade"}
             </button>
           </div>
         )}
@@ -172,26 +195,9 @@ export default function BoostPage() {
     )
   }
 
-  // Get the details of the upgrade for a specific type and level
-  const getUpgradeDetails = (type: UpgradeType, level: number) => {
-    switch (type) {
-      case "rate":
-        return `+${MINING_RATE_UPGRADES[level]?.bonus || 0} WBUX/hr`
-      case "boost":
-        return `+${MINING_BOOST_UPGRADES[level]?.bonus || 0}% boost`
-      case "time":
-        return `-${MINING_TIME_UPGRADES[level]?.bonus || 0} minutes`
-      case "nft":
-        return `+${NFT_SLOT_UPGRADES[level]?.slots || 0} slot(s)`
-      default:
-        return ""
-    }
-  }
-
   return (
     <div className="min-h-screen bg-gray-900 pb-20">
       <div className="max-w-md mx-auto p-4">
-        {/* Header */}
         <div className="flex items-center mb-6">
           <button onClick={() => router.push("/")} className="text-gray-400 hover:text-white mr-4">
             ← Back
@@ -199,7 +205,6 @@ export default function BoostPage() {
           <h1 className="text-2xl font-bold text-white">Mining Upgrades</h1>
         </div>
 
-        {/* Success/Error Message */}
         {message && (
           <div
             className={`mb-4 p-3 rounded-lg ${
@@ -212,27 +217,43 @@ export default function BoostPage() {
           </div>
         )}
 
-        {/* Tabs for Upgrade Types */}
         <div className="bg-gray-800 rounded-lg mb-6">
           <div className="flex flex-wrap">
-            {["rate", "boost", "time", "nft"].map((type) => (
-              <button
-                key={type}
-                className={`py-3 px-4 text-sm font-medium ${
-                  activeTab === type ? "bg-blue-600 text-white" : "text-gray-300 hover:bg-gray-700"
-                }`}
-                onClick={() => setActiveTab(type as UpgradeType)}
-              >
-                {type === "rate" && "Mining Rate"}
-                {type === "boost" && "Mining Boost"}
-                {type === "time" && "Mining Time"}
-                {type === "nft" && "NFT Slots"}
-              </button>
-            ))}
+            <button
+              className={`py-3 px-4 text-sm font-medium ${
+                activeTab === "rate" ? "bg-blue-600 text-white" : "text-gray-300 hover:bg-gray-700"
+              }`}
+              onClick={() => setActiveTab("rate")}
+            >
+              Mining Rate
+            </button>
+            <button
+              className={`py-3 px-4 text-sm font-medium ${
+                activeTab === "boost" ? "bg-blue-600 text-white" : "text-gray-300 hover:bg-gray-700"
+              }`}
+              onClick={() => setActiveTab("boost")}
+            >
+              Mining Boost
+            </button>
+            <button
+              className={`py-3 px-4 text-sm font-medium ${
+                activeTab === "time" ? "bg-blue-600 text-white" : "text-gray-300 hover:bg-gray-700"
+              }`}
+              onClick={() => setActiveTab("time")}
+            >
+              Mining Time
+            </button>
+            <button
+              className={`py-3 px-4 text-sm font-medium ${
+                activeTab === "nft" ? "bg-blue-600 text-white" : "text-gray-300 hover:bg-gray-700"
+              }`}
+              onClick={() => setActiveTab("nft")}
+            >
+              NFT Slots
+            </button>
           </div>
         </div>
 
-        {/* Wallet Information */}
         <div className="bg-gray-800 rounded-lg p-4 mb-6">
           <div className="flex justify-between">
             <div>
@@ -246,15 +267,17 @@ export default function BoostPage() {
           </div>
         </div>
 
-        {/* Render Active Tab Content */}
         {activeTab === "rate" &&
-          renderUpgradeCard("rate", "Mining Rate", "Increase your base mining rate per hour")}
+          renderUpgradeCard("rate", "Mining Rate", "Increase your base mining rate per hour", miningRateLevel)}
+
         {activeTab === "boost" &&
-          renderUpgradeCard("boost", "Mining Boost", "Increase your mining boost percentage")}
+          renderUpgradeCard("boost", "Mining Boost", "Increase your mining boost percentage", miningBoostLevel)}
+
         {activeTab === "time" &&
-          renderUpgradeCard("time", "Mining Time", "Reduce the time required for mining")}
+          renderUpgradeCard("time", "Mining Time", "Reduce the time required for mining", miningTimeLevel)}
+
         {activeTab === "nft" &&
-          renderUpgradeCard("nft", "NFT Slots", "Unlock additional NFT slots for more boosts")}
+          renderUpgradeCard("nft", "NFT Slots", "Unlock additional NFT slots for more boosts", nftSlotLevel)}
       </div>
     </div>
   )
