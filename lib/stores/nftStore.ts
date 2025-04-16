@@ -9,7 +9,7 @@ export type NFTStatus = "OWNED" | "FOR_SALE" | "AUCTION" | "ACTIVATED";
 
 export interface NFTBoost {
   type: "MINING_RATE" | "MINING_TIME" | "REWARD_MULTIPLIER" | "SPECIAL";
-  value: number; 
+  value: number;
   duration?: number; // Duration in days, undefined means permanent
 }
 
@@ -44,9 +44,16 @@ export interface Bid {
   timestamp: string;
 }
 
-interface Wallet {
+export interface Wallet {
   userId: string;
   address: string;
+}
+
+export interface BoostTotals {
+  miningRate: number;
+  miningTime: number;
+  rewardMultiplier: number;
+  special: number;
 }
 
 interface NFTState {
@@ -56,13 +63,12 @@ interface NFTState {
 
   // NFT Management
   addNFT: (nft: Omit<NFT, "id" | "mintDate" | "status" | "ownerId" | "ownerName">) => void;
-  listForSale: (nftId: string, price: number, priceType: "DOLLARS" | "TOKENS") => void;
-  cancelListing: (nftId: string) => void;
 
   // Queries
   getOwnedNFTs: (userId: string) => NFT[];
   getMarketplaceNFTs: () => NFT[];
-  getActiveNFTs: (userId: string) => NFT[]; // Added here
+  getActiveNFTs: (userId: string) => NFT[];
+  calculateTotalBoost: (userId: string) => BoostTotals;
 
   // NFT Initialization
   initializeNFTs: () => void;
@@ -87,29 +93,34 @@ export const useNFTStore = create<NFTState>()(
         };
         set((state) => ({ nfts: [...state.nfts, newNFT] }));
       },
-      listForSale: (nftId, price, priceType) => {
-        set((state) => ({
-          nfts: state.nfts.map((nft) =>
-            nft.id === nftId
-              ? { ...nft, status: "FOR_SALE", price, priceType }
-              : nft
-          ),
-        }));
-      },
-      cancelListing: (nftId) => {
-        set((state) => ({
-          nfts: state.nfts.map((nft) =>
-            nft.id === nftId
-              ? { ...nft, status: "OWNED", price: undefined, priceType: undefined }
-              : nft
-          ),
-        }));
-      },
 
       // Queries
       getOwnedNFTs: (userId) => get().nfts.filter((nft) => nft.ownerId === userId),
       getMarketplaceNFTs: () => get().nfts.filter((nft) => nft.status === "FOR_SALE"),
-      getActiveNFTs: (userId) => get().nfts.filter((nft) => nft.ownerId === userId && nft.status === "ACTIVATED"), // Implemented here
+      getActiveNFTs: (userId) => get().nfts.filter((nft) => nft.ownerId === userId && nft.status === "ACTIVATED"),
+      calculateTotalBoost: (userId) => {
+        const activeNFTs = get().getActiveNFTs(userId);
+        return activeNFTs.reduce(
+          (totals, nft) => {
+            switch (nft.boost.type) {
+              case "MINING_RATE":
+                totals.miningRate += nft.boost.value;
+                break;
+              case "MINING_TIME":
+                totals.miningTime += nft.boost.value;
+                break;
+              case "REWARD_MULTIPLIER":
+                totals.rewardMultiplier += nft.boost.value;
+                break;
+              case "SPECIAL":
+                totals.special += nft.boost.value;
+                break;
+            }
+            return totals;
+          },
+          { miningRate: 0, miningTime: 0, rewardMultiplier: 0, special: 0 }
+        );
+      },
 
       // NFT Initialization
       initializeNFTs: () => {
