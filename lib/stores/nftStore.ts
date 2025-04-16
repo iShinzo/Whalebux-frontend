@@ -69,7 +69,8 @@ interface NFTState {
   listForAuction: (nftId: string, startingPrice: number, endTime: string) => void;
   cancelListing: (nftId: string) => void;
   buyNFT: (nftId: string, buyerId: string, buyerName: string) => void;
-  getBidsForNFT: (nftId: string) => Bid[]; // Added here
+  getBidsForNFT: (nftId: string) => Bid[];
+  placeBid: (nftId: string, bidderId: string, bidderName: string, amount: number) => void; // Added here
 
   // Queries
   getOwnedNFTs: (userId: string) => NFT[];
@@ -163,7 +164,32 @@ export const useNFTStore = create<NFTState>()(
         }));
       },
       getBidsForNFT: (nftId) => {
-        return get().bids.filter((bid) => bid.nftId === nftId); // Implementation added here
+        return get().bids.filter((bid) => bid.nftId === nftId);
+      },
+      placeBid: (nftId, bidderId, bidderName, amount) => {
+        const newBid: Bid = {
+          id: `bid_${Math.random().toString(36).substring(2, 9)}`,
+          nftId,
+          bidderId,
+          bidderName,
+          amount,
+          timestamp: new Date().toISOString(),
+        };
+        set((state) => ({ bids: [...state.bids, newBid] }));
+
+        // Update highest bid on the NFT
+        set((state) => ({
+          nfts: state.nfts.map((nft) =>
+            nft.id === nftId
+              ? {
+                  ...nft,
+                  highestBid: Math.max(nft.highestBid || 0, amount),
+                  highestBidder: bidderId,
+                  highestBidderName: bidderName,
+                }
+              : nft
+          ),
+        }));
       },
 
       // Queries
