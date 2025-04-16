@@ -120,8 +120,6 @@ export const useNFTStore = create<NFTState>()(
         set((state) => ({ nfts: [...state.nfts, newNFT] }));
       },
 
-      // Other NFT-related functionality omitted for brevity (same as original)
-
       // NFT Initialization
       initializeNFTs: () => {
         if (get().nfts.length === 0) {
