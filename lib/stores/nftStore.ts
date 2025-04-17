@@ -273,3 +273,6 @@ export const useNFTStore = create<NFTState>()(
 
 // Export the initializeNFTs function for external use
 export const initializeNFTs = useNFTStore.getState().initializeNFTs;
+
+// Export the initializeNFTs function for external use
+export const initializeNFTs = useNFTStore.getState().initializeNFTs;
