@@ -3,13 +3,18 @@
 import { useEffect, useState } from "react";
 import { userApi } from "./api-service";
 
-// Define types for the custom hook
+// Define the Telegram WebApp interface (local to this file)
 interface TelegramWebApp {
   ready: () => void;
   expand: () => void;
-  initData: string; // Match this with the global declaration
+  initData: string;
   initDataUnsafe?: {
-    user?: TelegramUser;
+    user?: {
+      id: number;
+      username?: string;
+      first_name?: string;
+      last_name?: string;
+    };
   };
 }
 
@@ -22,7 +27,7 @@ interface TelegramUser {
 
 interface UserData {
   userId: string;
-  telegramId: number; // Ensure this is strictly a number (no undefined)
+  telegramId: number | null;
   username?: string;
   firstName?: string;
   lastName?: string;
@@ -42,87 +47,118 @@ export function useTelegramWebApp(): TelegramWebAppHook {
   const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
-    // Ensure this runs only in a browser environment
-    if (typeof window === "undefined") return;
+    if (typeof window === "undefined") {
+      setLoading(false);
+      setError("This hook must run in a browser environment.");
+      return;
+    }
+
+    // Mock Telegram WebApp in development mode
+    if (process.env.NODE_ENV === "development" && !window.Telegram?.WebApp) {
+      console.log("Mocking Telegram WebApp for development.");
+      const mockWebApp: TelegramWebApp = {
+        ready: () => console.log("Mock Telegram WebApp is ready"),
+        expand: () => console.log("Mock Telegram WebApp expanded"),
+        initData: "mock_init_data",
+        initDataUnsafe: {
+          user: {
+            id: 1,
+            username: "mock_user",
+            first_name: "Mock",
+            last_name: "User",
+          },
+        },
+      };
+      window.Telegram = { WebApp: mockWebApp };
+    }
 
     const initTelegram = async () => {
       try {
         console.log("Initializing Telegram WebApp...");
 
-        // Check if Telegram WebApp is available
-        if (window.Telegram?.WebApp) {
-          console.log("Telegram WebApp detected, initializing...");
+        // Check if window.Telegram and window.Telegram.WebApp exist
+        if (!window.Telegram || !window.Telegram.WebApp) {
+          console.error("Telegram WebApp not detected.");
+          setError("Telegram WebApp not detected. Ensure this is opened within Telegram.");
+          return;
+        }
 
-          // Prepare the WebApp
-          window.Telegram.WebApp.ready();
-          window.Telegram.WebApp.expand();
+        const telegramWebApp = window.Telegram.WebApp as TelegramWebApp;
+        console.log("Telegram WebApp detected, initializing...");
 
-          // Extract user data from Telegram initData
-          const initData = window.Telegram.WebApp.initDataUnsafe;
-          const telegramUser = initData?.user;
+        // Initialize Telegram WebApp
+        telegramWebApp.ready();
+        telegramWebApp.expand();
 
-          if (telegramUser) {
-            const telegramId = telegramUser.id;
-            console.log("Telegram user data:", telegramUser);
+        // Get user data from Telegram
+        const initData = telegramWebApp.initDataUnsafe;
+        const telegramUser = initData?.user;
 
+        if (!telegramUser) {
+          console.log("No Telegram user data found.");
+          setError("No Telegram user data available.");
+          return;
+        }
+
+        const telegramId = telegramUser.id;
+        console.log("Telegram user data:", telegramUser);
+
+        try {
+          // Fetch user data from API
+          const userData = await userApi.getUserData(telegramId);
+          console.log("User data fetched from API:", userData);
+          setUser({
+            userId: userData.userId,
+            telegramId: userData.telegramId ?? telegramId,
+            username: userData.username,
+            firstName: userData.firstName,
+            lastName: userData.lastName,
+          });
+        } catch (fetchError) {
+          console.error("Error fetching user data:", fetchError);
+
+          // Handle 404 (user not found) by creating a new user
+          if (fetchError instanceof Error && fetchError.message.includes("404")) {
+            console.log("User not found in database, creating new user...");
             try {
-              // Fetch user data from the backend
-              const userData = await userApi.getUserData(telegramId);
-              console.log("User data fetched from API:", userData);
-              setUser({
-                ...userData,
-                telegramId: userData.telegramId ?? telegramId, // Ensure telegramId is set
+              const newUser = await userApi.createUser({
+                telegramId,
+                username: telegramUser.username || `user_${telegramId}`,
+                firstName: telegramUser.first_name || "",
+                lastName: telegramUser.last_name || "",
               });
-            } catch (fetchError) {
-              console.error("Error fetching user data:", fetchError);
-
-              // Handle case when the user does not exist in the backend
-              if (fetchError instanceof Error && fetchError.message.includes("404")) {
-                console.log("User not found in database, creating new user...");
-
-                try {
-                  const newUser = await userApi.createUser({
-                    telegramId,
-                    username: telegramUser.username || `user_${telegramId}`,
-                    firstName: telegramUser.first_name || "",
-                    lastName: telegramUser.last_name || "",
-                  });
-                  console.log("New user created successfully:", newUser);
-                  setUser({
-                    ...newUser,
-                    telegramId: newUser.telegramId ?? telegramId, // Ensure telegramId is set
-                  });
-                } catch (createError) {
-                  console.error("Error creating new user:", createError);
-                  setError(
-                    `Failed to create user: ${
-                      createError instanceof Error ? createError.message : String(createError)
-                    }`
-                  );
-                }
-              } else {
-                setError(
-                  `Failed to fetch user data: ${
-                    fetchError instanceof Error ? fetchError.message : String(fetchError)
-                  }`
-                );
-              }
+              console.log("New user created successfully:", newUser);
+              setUser({
+                userId: newUser.userId,
+                telegramId: newUser.telegramId ?? telegramId,
+                username: newUser.username,
+                firstName: newUser.firstName,
+                lastName: newUser.lastName,
+              });
+            } catch (createError) {
+              console.error("Error creating new user:", createError);
+              setError(
+                `Failed to create user: ${
+                  createError instanceof Error ? createError.message : String(createError)
+                }`,
+              );
             }
           } else {
-            console.log("No Telegram user data found");
+            setError(
+              `Failed to fetch user data: ${
+                fetchError instanceof Error ? fetchError.message : String(fetchError)
+              }`,
+            );
           }
-
-          setWebApp(window.Telegram.WebApp);
-        } else {
-          console.error("Telegram WebApp not detected");
-          setError("Telegram WebApp not detected. Ensure this is opened within Telegram.");
         }
+
+        setWebApp(telegramWebApp);
       } catch (err) {
         console.error("Error initializing Telegram WebApp:", err);
         setError(
           `Error initializing Telegram WebApp: ${
             err instanceof Error ? err.message : String(err)
-          }`
+          }`,
         );
       } finally {
         setLoading(false);

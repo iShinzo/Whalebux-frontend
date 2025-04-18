@@ -1,10 +1,10 @@
 declare global {
   interface Window {
     Telegram?: {
-      WebApp: {
+      WebApp?: {
         ready: () => void;
         expand: () => void;
-        initData: string; // This is required to match the other declaration
+        initData: string;
         initDataUnsafe?: {
           user?: {
             id: number;
@@ -17,5 +17,4 @@ declare global {
     };
   }
 }
-
 export {};
