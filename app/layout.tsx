@@ -1,6 +1,6 @@
 import type React from "react";
 import { ThemeProvider } from "next-themes";
-import "./globals.css";
+import "../styles/globals.css";
 
 export const metadata = {
   title: "WhaleBux",
