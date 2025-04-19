@@ -6,7 +6,7 @@ const app = express();
 
 // Enable CORS for specific origins
 app.use(cors({
-  origin: ['https://whalebux-frontend.onrender.com'], // Add other allowed origins if needed
+  origin: ['https://whalebux-frontend.onrender.com', 'https://whalebux-vercel.onrender.com'], // Add other allowed origins if needed
   methods: ['GET', 'POST', 'PUT', 'DELETE'],
   allowedHeaders: ['Content-Type', 'Authorization']
 }));
