@@ -19,7 +19,7 @@ app.use(helmet({
       scriptSrc: ["'self'", "'sha256-tedRox3su+GHX4mnJtzGrc5R6ADKfDKV8uYjLDmMupE='"], // Add other hashes or nonces as needed
       styleSrc: ["'self'", "'unsafe-inline'"], // Adjust as per your requirements
       imgSrc: ["'self'", "data:"],
-      connectSrc: ["'self'", "https://api.example.com"], // Add your API endpoints
+      connectSrc: ["'self'", "https://whalebux-vercel.onrender.com"], // Add your API endpoints
       fontSrc: ["'self'", "https://fonts.googleapis.com"],
       objectSrc: ["'none'"],
       upgradeInsecureRequests: []
@@ -27,6 +27,6 @@ app.use(helmet({
   }
 }));
 
-app.listen(3000, () => {
-  console.log('Server is running on port 3000');
+app.listen(8080, () => {
+  console.log('Server is running on port 8080');
 });
