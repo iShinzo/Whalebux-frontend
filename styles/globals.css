@@ -16,6 +16,9 @@ body {
   .bg-background {
     background-color: var(--background);
   }
+  .text-foreground {
+    color: var(--foreground);
+  }
 }
 
 @layer base {
