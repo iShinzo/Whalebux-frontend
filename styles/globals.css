@@ -13,6 +13,9 @@ body {
   .border-border {
     border-color: var(--border);
   }
+  .bg-background {
+    background-color: var(--background);
+  }
 }
 
 @layer base {
