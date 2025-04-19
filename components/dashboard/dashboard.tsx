@@ -163,13 +163,6 @@ export const Dashboard = () => {
             Telegram WebApp: {webApp ? "Available" : "Not Available"}
           </p>
         </div>
-        <Link
-          href="/test"
-          className="btn btn-primary mt-4"
-          aria-label="Go to Test Mode"
-        >
-          Go to Test Mode
-        </Link>
       </div>
     );
   }
