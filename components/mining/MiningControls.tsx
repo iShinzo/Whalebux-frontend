@@ -5,24 +5,42 @@ import { useRouter } from "next/navigation"
 import { useUserStore } from "../../lib/stores/userStore"
 import { useMiningStore } from "../../lib/stores/miningStore"
 import { useNFTStore } from "../../lib/stores/nftStore"
-import { LEVEL_CONFIG, getLevelFromExperience } from "../../lib/config/miningConfig"
+import { LEVEL_CONFIG, getLevelFromExperience, calculateTotalMiningRate, calculateTotalBoost } from "../../lib/config/miningConfig"
+import React from "react"
 
-export default function MiningControls() {
+const MiningControls = () => {
   const router = useRouter()
-  const { experience, loginStreak, miningRateLevel, miningBoostLevel, referralBoost } = useUserStore()
-  const { isMining, currentMined, startMining, getMiningStats } = useMiningStore()
-  const nftBoosts = useNFTStore((state) => {
-    const userId = useUserStore.getState().userId
-    return userId
-      ? state.calculateTotalBoost(userId)
-      : { miningRate: 0, miningTime: 0, rewardMultiplier: 0, special: 0 }
-  })
+  const { experience, loginStreak, miningRateLevel, miningBoostLevel, referralBoost, miningTimeLevel, userId } = useUserStore()
+  const { isMining, currentMined, startMining } = useMiningStore()
+
+  // Calculate NFT boosts outside Zustand selector to avoid infinite loop
+  const nftStore = useNFTStore();
+  const nftBoosts = React.useMemo(() => (userId ? nftStore.calculateTotalBoost(userId) : { miningRate: 0, miningTime: 0, rewardMultiplier: 0, special: 0 }), [nftStore, userId]);
 
   const level = getLevelFromExperience(experience)
   const config = LEVEL_CONFIG[level]
-  const { totalRate, totalBoost, estimatedEarnings } = getMiningStats()
 
-  // Clean up interval on unmount
+  const totalRate = React.useMemo(() =>
+    calculateTotalMiningRate(config.baseRate, miningRateLevel),
+    [config.baseRate, miningRateLevel]
+  )
+
+  const totalBoost = React.useMemo(() =>
+    calculateTotalBoost(
+      config.boost,
+      miningBoostLevel,
+      loginStreak,
+      nftBoosts.miningRate || 0,
+      referralBoost
+    ),
+    [config.boost, miningBoostLevel, loginStreak, nftBoosts, referralBoost]
+  )
+
+  const estimatedEarnings = React.useMemo(() =>
+    totalRate * config.miningDuration * (1 + totalBoost / 100),
+    [totalRate, config.miningDuration, totalBoost]
+  )
+
   useEffect(() => {
     return () => {
       const { miningInterval } = useMiningStore.getState()
@@ -95,3 +113,5 @@ export default function MiningControls() {
     </div>
   )
 }
+
+export default MiningControls

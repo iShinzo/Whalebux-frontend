@@ -1,4 +1,4 @@
-// File: /workspaces/Whalebux-frontend/app/page.tsx
+// File: C:\Users\nijme\Desktop\WhaleBux\whalebux-dashboard_gitfolder\Whalebux-frontend\Whalebux-frontend\app\page.tsx
 import * as entry from '../../../app/page.js'
 import type { ResolvingMetadata, ResolvingViewport } from 'next/dist/lib/metadata/types/metadata-interface.js'
 

@@ -31,6 +31,11 @@ interface UserData {
   username?: string;
   firstName?: string;
   lastName?: string;
+  wbuxBalance?: number;
+  level?: number;
+  referralCode?: string;
+  referralCount?: number;
+  miningRateLevel?: number;
 }
 
 interface TelegramWebAppHook {
@@ -52,6 +57,9 @@ export function useTelegramWebApp(): TelegramWebAppHook {
       setError("This hook must run in a browser environment.");
       return;
     }
+
+    // Debugging: Log the window.Telegram object to inspect it
+    console.log("window.Telegram:", window.Telegram);
 
     // Mock Telegram WebApp in development mode
     if (process.env.NODE_ENV === "development" && !window.Telegram?.WebApp) {
@@ -79,12 +87,14 @@ export function useTelegramWebApp(): TelegramWebAppHook {
         // Check if window.Telegram and window.Telegram.WebApp exist
         if (!window.Telegram || !window.Telegram.WebApp) {
           console.error("Telegram WebApp not detected.");
-          setError("Telegram WebApp not detected. Ensure this is opened within Telegram.");
+          setError(
+            "Telegram WebApp not detected. Ensure this app is opened via a Telegram bot's WebApp link or button.",
+          );
           return;
         }
 
         const telegramWebApp = window.Telegram.WebApp as TelegramWebApp;
-        console.log("Telegram WebApp detected, initializing...");
+        console.log("Telegram WebApp detected:", telegramWebApp);
 
         // Initialize Telegram WebApp
         telegramWebApp.ready();
@@ -167,6 +177,43 @@ export function useTelegramWebApp(): TelegramWebAppHook {
 
     initTelegram();
   }, []);
+
+  useEffect(() => {
+    if (user) {
+      // Update the Zustand user store with backend/Telegram data
+      // Use actual backend values, fallback to defaults if missing
+      const {
+        userId,
+        telegramId,
+        username,
+        firstName,
+        lastName,
+        wbuxBalance = 100.0,
+        level = 1,
+        referralCode = `REF_${user.telegramId}`,
+        referralCount = 0,
+        miningRateLevel = 0,
+      } = user;
+      // Import useUserStore at the top if not already
+      // import { useUserStore } from "./stores/userStore";
+      // Set state
+      if (typeof window !== "undefined") {
+        // Only update on client
+        require("./stores/userStore").useUserStore.setState({
+          userId,
+          telegramId,
+          username,
+          firstName,
+          lastName,
+          wbuxBalance,
+          level,
+          referralCode,
+          referralCount,
+          miningRateLevel,
+        });
+      }
+    }
+  }, [user]);
 
   return { webApp, user, loading, error };
 }

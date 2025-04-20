@@ -1,5 +1,6 @@
 "use client";
 
+import React, { useMemo, useState, useEffect } from "react";
 import { useUserStore } from "../../lib/stores/userStore";
 import { useMiningStore } from "../../lib/stores/miningStore";
 import { getLevelFromExperience, getLevelProgress, getExperienceForNextLevel } from "../../lib/config/miningConfig";
@@ -10,7 +11,25 @@ export default function MiningStats() {
 
   // Retrieve mining stats from the mining store
   const { getMiningStats } = useMiningStore();
-  const { estimatedEarnings, miningDuration, timeReduction } = getMiningStats(); // Removed argument since it expects none
+
+  // State to track if the component is mounted
+  const [mounted, setMounted] = useState(false);
+  useEffect(() => {
+    setMounted(true);
+  }, []);
+
+  // Memoize mining stats to avoid infinite re-renders
+  const miningStats = useMemo(
+    () => (mounted ? getMiningStats() : null),
+    [mounted, experience]
+  );
+
+  if (!mounted || !miningStats) {
+    // Optionally render a skeleton or nothing until client-side mount
+    return null;
+  }
+
+  const { estimatedEarnings, miningDuration, timeReduction } = miningStats;
 
   // Calculate the user's level and progress
   const level = getLevelFromExperience(experience);

@@ -1,8 +1,10 @@
 "use client"
 
 import { useRouter } from "next/navigation"
+import { useState } from "react"
 import { useUserStore } from "../../lib/stores/userStore"
 import { useMiningStore } from "../../lib/stores/miningStore"
+import { userApi } from "../../lib/api-service"
 import MiningControls from "../../components/mining/MiningControls"
 import MiningProgress from "../../components/mining/MiningProgress"
 import MiningStats from "../../components/mining/MiningStats"
@@ -12,6 +14,22 @@ export default function MiningPage() {
   const router = useRouter()
   const { experience, firstName } = useUserStore()
   const { isMining } = useMiningStore()
+
+  const [refreshing, setRefreshing] = useState(false)
+  const telegramId = useUserStore((state) => state.telegramId)
+  const setUser = useUserStore((state) => state.setUser)
+
+  async function handleRefresh() {
+    if (!telegramId) return
+    setRefreshing(true)
+    try {
+      const freshUser = await userApi.getUserData(telegramId)
+      setUser(freshUser)
+    } catch (e) {
+      // Optionally show error
+    }
+    setRefreshing(false)
+  }
 
   const level = getLevelFromExperience(experience)
 
@@ -31,6 +49,14 @@ export default function MiningPage() {
             You are currently at Level {level}. Mine WhaleBux Dollars by clicking the button below.
           </p>
         </div>
+
+        <button
+          className="bg-blue-600 hover:bg-blue-500 text-white px-4 py-2 rounded mb-4"
+          onClick={handleRefresh}
+          disabled={refreshing}
+        >
+          {refreshing ? "Refreshing..." : "Refresh User Data"}
+        </button>
 
         <MiningStats />
 
