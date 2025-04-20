@@ -1,7 +1,8 @@
 import type React from "react";
 import { ThemeProvider } from "next-themes";
 import Link from "next/link";
-import { usePathname } from "next/navigation";
+import { SidebarProvider, Sidebar, useSidebar } from "../components/ui/sidebar";
+import { useIsMobile } from "../hooks/use-mobile";
 import "../styles/globals.css";
 
 const navItems = [
@@ -15,8 +16,10 @@ const navItems = [
   { name: "Boost", href: "/boost", icon: "⚡" },
 ];
 
-function Sidebar() {
+function SidebarNav() {
   const pathname = typeof window !== "undefined" ? window.location.pathname : "/";
+  const { isMobile, setOpenMobile } = useSidebar();
+
   return (
     <aside className="h-screen w-56 bg-black border-r border-gray-800 flex flex-col py-6 px-2">
       <div className="mb-8 flex items-center justify-center">
@@ -30,6 +33,9 @@ function Sidebar() {
               <Link
                 href={item.href}
                 className={`flex items-center px-4 py-3 rounded-lg transition-colors text-lg font-medium ${pathname === item.href ? "bg-gray-800 text-white" : "text-gray-400 hover:bg-gray-800 hover:text-white"}`}
+                onClick={() => {
+                  if (isMobile) setOpenMobile(false);
+                }}
               >
                 <span className="mr-3 text-xl">{item.icon}</span>
                 {item.name}
@@ -57,17 +63,21 @@ export default function RootLayout({
     <html lang="en" suppressHydrationWarning>
       <body className="min-h-screen bg-black text-white flex">
         <ThemeProvider attribute="class" defaultTheme="dark" enableSystem={false}>
-          <Sidebar />
-          <main className="flex-1 min-h-screen bg-black px-6 py-8 overflow-y-auto">
-            <header className="flex items-center justify-between mb-8">
-              <h1 className="text-3xl font-bold tracking-wide">WhaleBux Mining App</h1>
-              <div className="flex items-center space-x-4">
-                <img src="/placeholder-user.jpg" alt="User" className="h-10 w-10 rounded-full border-2 border-gray-700" />
-                <span className="text-lg font-semibold">User</span>
-              </div>
-            </header>
-            {children}
-          </main>
+          <SidebarProvider>
+            <Sidebar>
+              <SidebarNav />
+            </Sidebar>
+            <main className="flex-1 min-h-screen bg-black px-2 py-4 overflow-y-auto w-full max-w-full overflow-x-hidden">
+              <header className="flex items-center justify-between mb-8">
+                <h1 className="text-3xl font-bold tracking-wide">WhaleBux Mining App</h1>
+                <div className="flex items-center space-x-4">
+                  <img src="/placeholder-user.jpg" alt="User" className="h-10 w-10 rounded-full border-2 border-gray-700" />
+                  <span className="text-lg font-semibold">User</span>
+                </div>
+              </header>
+              {children}
+            </main>
+          </SidebarProvider>
         </ThemeProvider>
       </body>
     </html>

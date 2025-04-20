@@ -166,10 +166,18 @@ export const Dashboard = () => {
   if (error || !user) {
     return (
       <div className="flex flex-col items-center justify-center min-h-screen p-4 bg-background">
-        <h1 className="text-3xl font-bold text-foreground mb-4">Error</h1>
+        <h1 className="text-3xl font-bold text-foreground mb-4">Telegram Not Detected</h1>
         <p className="text-muted-foreground mb-4 text-center">
-          {error || "Could not authenticate with Telegram. Please try again."}
+          This app must be opened from the Telegram app using the bot's WebApp button.<br />
+          If you see this message in Telegram, try closing and reopening the app.<br />
+          <span className="block mt-2">{error || "Could not authenticate with Telegram. Please try again."}</span>
         </p>
+        <button
+          className="bg-blue-600 hover:bg-blue-500 text-white px-4 py-2 rounded mb-4"
+          onClick={() => window.location.reload()}
+        >
+          Retry Detection
+        </button>
         <div className="card p-4 w-full max-w-md mb-4">
           <h2 className="text-xl font-bold text-foreground mb-2">Debug Information</h2>
           <p className="text-muted-foreground text-sm">
