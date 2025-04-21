@@ -28,6 +28,7 @@ const nextConfig = {
               connect-src 'self' https://whalebux-vercel.onrender.com${isDev ? " http://localhost:8080" : ""};
               font-src 'self';
               object-src 'none';
+              frame-src 'self' https://vercel.live;
             `.replace(/\s{2,}/g, ' ').trim(), // Minify the CSP string
           },
         ],
