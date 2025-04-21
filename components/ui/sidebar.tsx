@@ -20,6 +20,7 @@ import {
   TooltipProvider,
   TooltipTrigger,
 } from "@/components/ui/tooltip"
+import { SidebarNav } from "@/components/ui/sidebar-nav"
 
 const SIDEBAR_COOKIE_NAME = "sidebar:state"
 const SIDEBAR_COOKIE_MAX_AGE = 60 * 60 * 24 * 7
@@ -252,8 +253,8 @@ const Sidebar = React.forwardRef<
 )
 Sidebar.displayName = "Sidebar"
 
-export function MobileSidebar({ renderNav }: { renderNav: (closeDrawer: () => void) => React.ReactNode }) {
-  const [isOpen, setIsOpen] = useState(false)
+export function MobileSidebar() {
+  const [isOpen, setIsOpen] = useState(false);
 
   return (
     <>
@@ -262,47 +263,21 @@ export function MobileSidebar({ renderNav }: { renderNav: (closeDrawer: () => vo
         onClick={() => setIsOpen(true)}
         aria-label="Open menu"
       >
-        <svg
-          width="24"
-          height="24"
-          fill="none"
-          stroke="currentColor"
-          strokeWidth="2"
-          viewBox="0 0 24 24"
-        >
-          <path
-            strokeLinecap="round"
-            strokeLinejoin="round"
-            d="M4 6h16M4 12h16M4 18h16"
-          />
+        <svg width="24" height="24" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24">
+          <path strokeLinecap="round" strokeLinejoin="round" d="M4 6h16M4 12h16M4 18h16" />
         </svg>
       </button>
       <Transition show={isOpen} as={Fragment}>
         <Dialog as="div" className="relative z-50 md:hidden" onClose={setIsOpen}>
-          <Transition.Child
-            as={Fragment}
-            enter="ease-out duration-300"
-            enterFrom="opacity-0"
-            enterTo="opacity-100"
-            leave="ease-in duration-200"
-            leaveFrom="opacity-100"
-            leaveTo="opacity-0"
-          >
+          <Transition.Child as={Fragment} enter="ease-out duration-300" enterFrom="opacity-0" enterTo="opacity-100" leave="ease-in duration-200" leaveFrom="opacity-100" leaveTo="opacity-0">
             <div className="fixed inset-0 bg-black/60" />
           </Transition.Child>
           <div className="fixed inset-0 overflow-y-auto">
             <div className="flex min-h-full">
-              <Transition.Child
-                as={Fragment}
-                enter="ease-out duration-300"
-                enterFrom="-translate-x-full"
-                enterTo="translate-x-0"
-                leave="ease-in duration-200"
-                leaveFrom="translate-x-0"
-                leaveTo="-translate-x-full"
-              >
+              <Transition.Child as={Fragment} enter="ease-out duration-300" enterFrom="-translate-x-full" enterTo="translate-x-0" leave="ease-in duration-200" leaveFrom="translate-x-0" leaveTo="-translate-x-full">
                 <Dialog.Panel className="w-64 max-w-xs bg-black border-r border-gray-800 p-6 flex flex-col">
-                  {renderNav(() => setIsOpen(false))}
+                  {/* Render SidebarNav directly and close drawer on navigation */}
+                  <SidebarNav onNavigate={() => setIsOpen(false)} />
                 </Dialog.Panel>
               </Transition.Child>
             </div>
@@ -310,7 +285,7 @@ export function MobileSidebar({ renderNav }: { renderNav: (closeDrawer: () => vo
         </Dialog>
       </Transition>
     </>
-  )
+  );
 }
 
 export {
