@@ -5,6 +5,10 @@ import { useTelegramWebApp } from "../lib/telegram-init";
 import { Dashboard } from "../components/dashboard/dashboard";
 import Script from "next/script";
 
+if (typeof window !== "undefined") {
+  console.log("window.Telegram at top:", window.Telegram);
+}
+
 export default function Home() {
   const { webApp, user, loading, error } = useTelegramWebApp();
   const [isClient, setIsClient] = useState(false);
