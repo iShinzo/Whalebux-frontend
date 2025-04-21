@@ -12,7 +12,7 @@ const nextConfig = {
             key: 'Content-Security-Policy',
             value: `
               default-src 'self';
-              script-src 'self' 'unsafe-inline' https://whalebux-frontend.vercel.app https://whalebux-vercel.onrender.com${isDev ? " 'unsafe-eval'" : ""};
+              script-src 'self' 'unsafe-inline' https://telegram.org https://*.telegram.org https://t.me${isDev ? " 'unsafe-eval'" : ""};
               style-src 'self' 'unsafe-inline';
               img-src 'self' data:;
               connect-src 'self' https://whalebux-vercel.onrender.com${isDev ? " http://localhost:8080" : ""};
