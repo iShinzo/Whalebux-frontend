@@ -78,7 +78,7 @@
     "tailwindcss-animate": "^1.0.7",
     "telegraf": "^4.16.3",
     "use-sync-external-store": "latest",
-    "uuid": "latest",
+    "uuid": "^9.0.1",
     "vaul": "^0.9.6",
     "vue": "latest",
     "vue-router": "latest",
