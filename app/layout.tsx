@@ -39,15 +39,20 @@ export default function RootLayout({
           <div className="hidden md:block">
             <SidebarNav />
           </div>
-          <main className="flex-1 min-h-screen bg-black px-2 py-4 overflow-y-auto w-full max-w-full overflow-x-hidden">
-            <header className="flex items-center justify-between mb-8">
-              <h1 className="text-3xl font-bold tracking-wide">WhaleBux Mining App</h1>
-              <div className="flex items-center space-x-4">
-                <img src="/placeholder-user.jpg" alt="User" className="h-10 w-10 rounded-full border-2 border-gray-700" />
-                <span className="text-lg font-semibold">User</span>
+          {/* Responsive main container for 9:16 aspect ratio on mobile */}
+          <main className="flex-1 flex justify-center items-center min-h-screen bg-black px-2 py-4 overflow-y-auto w-full max-w-full overflow-x-hidden">
+            <div className="w-full h-full max-w-[430px] aspect-[9/16] bg-black rounded-lg shadow-lg flex flex-col">
+              <header className="flex items-center justify-between mb-8">
+                <h1 className="text-3xl font-bold tracking-wide">WhaleBux Mining App</h1>
+                <div className="flex items-center space-x-4">
+                  <img src="/placeholder-user.jpg" alt="User" className="h-10 w-10 rounded-full border-2 border-gray-700" />
+                  <span className="text-lg font-semibold">User</span>
+                </div>
+              </header>
+              <div className="flex-1 flex flex-col min-h-0">
+                {children}
               </div>
-            </header>
-            {children}
+            </div>
           </main>
         </ThemeProvider>
       </body>
