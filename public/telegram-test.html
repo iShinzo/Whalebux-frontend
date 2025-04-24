@@ -4,34 +4,12 @@
   <meta charset="UTF-8">
   <title>Telegram WebApp API Test</title>
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <style id="dynamic-style" nonce="telegramtest">
-    body { font-family: sans-serif; background: #111; color: #fff; display: flex; flex-direction: column; align-items: center; justify-content: center; min-height: 100vh; }
-    .result { font-size: 1.5rem; margin-top: 2rem; }
-    .details { margin-top: 1rem; color: #aaa; }
-  </style>
-  <script nonce="telegramtest">
-    const styleTag = document.getElementById('dynamic-style');
-    const nonceValue = 'randomNonce123'; // Replace with a securely generated nonce
-    styleTag.setAttribute('nonce', nonceValue);
-  </script>
+  <link rel="stylesheet" href="telegram-test.css">
 </head>
 <body>
   <h1>Telegram WebApp API Test</h1>
   <div class="result" id="result">Checking...</div>
   <div class="details" id="details"></div>
-  <script nonce="telegramtest">
-    function showResult() {
-      const result = document.getElementById('result');
-      const details = document.getElementById('details');
-      if (typeof window.Telegram !== 'undefined' && window.Telegram.WebApp) {
-        result.textContent = '✅ Telegram WebApp API detected!';
-        details.textContent = 'window.Telegram: ' + JSON.stringify(Object.keys(window.Telegram)) + '\nwindow.Telegram.WebApp: ' + JSON.stringify(Object.keys(window.Telegram.WebApp));
-      } else {
-        result.textContent = '❌ Telegram WebApp API NOT detected.';
-        details.textContent = 'window.Telegram: ' + (typeof window.Telegram);
-      }
-    }
-    window.onload = showResult;
-  </script>
+  <script src="telegram-test.js" nonce="telegramtest"></script>
 </body>
 </html>
