@@ -1,3 +1,4 @@
+"use client";
 import type React from "react";
 import { ThemeProvider } from "next-themes";
 import Link from "next/link";
