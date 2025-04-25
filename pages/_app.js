@@ -1,3 +1,5 @@
+'use client';
+
 import { useEffect } from 'react';
 import { useRouter } from 'next/router';
 import { useTelegramWebApp } from '../lib/telegram-init';
