@@ -1,8 +1,6 @@
 /** @type {import('next').NextConfig} */
 const nextConfig = {
   reactStrictMode: true,
-  // Enable production optimizations
-  swcMinify: true,
   // Enable production source maps
   productionBrowserSourceMaps: false,
 

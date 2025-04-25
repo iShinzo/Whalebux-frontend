@@ -20,6 +20,7 @@ interface UserState {
   username: string | null
   firstName: string | null
   lastName: string | null
+  photoUrl: string | null
   level: number
   experience: number
   wbuxDollars: number
@@ -57,6 +58,7 @@ export const useUserStore = create<UserState>()(
       username: null,
       firstName: null,
       lastName: null,
+      photoUrl: null,
       level: 1,
       experience: 0,
       wbuxDollars: 0,
@@ -122,6 +124,7 @@ export const useUserStore = create<UserState>()(
           username: null,
           firstName: null,
           lastName: null,
+          photoUrl: null,
           level: 1,
           experience: 0,
           wbuxDollars: 0,
