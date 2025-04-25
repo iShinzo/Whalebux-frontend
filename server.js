@@ -6,9 +6,15 @@ const app = express();
 
 // Enable CORS for specific origins
 app.use(cors({
-  origin: ['https://whalebux-frontend.vercel.app', 'https://whalebux-vercel.onrender.com'], // Add other allowed origins if needed
-  methods: ['GET', 'POST', 'PUT', 'DELETE'],
-  allowedHeaders: ['Content-Type', 'Authorization']
+  origin: [
+    'https://whalebux-frontend.vercel.app',
+    'https://whalebux-vercel.onrender.com',
+    'https://*.telegram.org',
+    'https://t.me'
+  ],
+  methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
+  allowedHeaders: ['Content-Type', 'Authorization', 'X-Requested-With'],
+  credentials: true
 }));
 
 // Set Content Security Policy (CSP) headers
@@ -16,17 +22,21 @@ app.use(helmet({
   contentSecurityPolicy: {
     directives: {
       defaultSrc: ["'self'"],
-      scriptSrc: ["'self'", "'sha256-tedRox3su+GHX4mnJtzGrc5R6ADKfDKV8uYjLDmMupE='"], // Add other hashes or nonces as needed
-      styleSrc: ["'self'", "'unsafe-inline'"], // Adjust as per your requirements
-      imgSrc: ["'self'", "data:"],
-      connectSrc: ["'self'", "https://whalebux-vercel.onrender.com"], // Add your API endpoints
-      fontSrc: ["'self'", "https://fonts.googleapis.com"],
+      scriptSrc: ["'self'", "'unsafe-inline'", "'unsafe-eval'", "https://telegram.org", "https://*.telegram.org"],
+      styleSrc: ["'self'", "'unsafe-inline'"],
+      imgSrc: ["'self'", "data:", "https://*.telegram.org"],
+      connectSrc: ["'self'", "https://whalebux-vercel.onrender.com", "https://*.telegram.org"],
+      fontSrc: ["'self'"],
       objectSrc: ["'none'"],
-      upgradeInsecureRequests: []
+      frameSrc: ["'self'", "https://*.telegram.org"],
+      frameAncestors: ["'self'", "https://*.telegram.org"]
     }
   }
 }));
 
-app.listen(8080, () => {
-  console.log('Server is running on port 8080');
+// Add OPTIONS handler for CORS preflight requests
+app.options('*', cors());
+
+app.listen(process.env.PORT || 8080, () => {
+  console.log(`Server is running on port ${process.env.PORT || 8080}`);
 });

@@ -16,30 +16,34 @@ const nextConfig = {
 
     return [
       {
-        source: '/(.*)', // Apply to all routes
+        source: '/(.*)',
         headers: [
           {
             key: 'Content-Security-Policy',
             value: `
               default-src 'self';
-              script-src 'self' 'unsafe-eval' https://telegram.org https://*.telegram.org https://t.me https://vercel.live${isDev ? " 'unsafe-eval'" : ""};
-              style-src 'self';
-              img-src 'self' data:;
-              connect-src 'self' https://whalebux-vercel.onrender.com${isDev ? " http://localhost:8080" : ""};
+              script-src 'self' 'unsafe-inline' 'unsafe-eval' https://telegram.org https://*.telegram.org https://t.me;
+              style-src 'self' 'unsafe-inline';
+              img-src 'self' data: https://*.telegram.org;
+              connect-src 'self' https://whalebux-vercel.onrender.com https://*.telegram.org${isDev ? " http://localhost:8080" : ""};
               font-src 'self';
               object-src 'none';
-              frame-src 'self' https://vercel.live;
-            `.replace(/\s{2,}/g, ' ').trim(), // Minify the CSP string
+              frame-src 'self' https://*.telegram.org;
+              frame-ancestors 'self' https://*.telegram.org;
+            `.replace(/\s{2,}/g, ' ').trim(),
           },
-        ],
-      },
-      {
-        source: '/api/:path*',
-        headers: [
-          { key: 'Access-Control-Allow-Credentials', value: 'true' },
-          { key: 'Access-Control-Allow-Origin', value: '*' },
-          { key: 'Access-Control-Allow-Methods', value: 'GET,OPTIONS,PATCH,DELETE,POST,PUT' },
-          { key: 'Access-Control-Allow-Headers', value: 'X-CSRF-Token, X-Requested-With, Accept, Accept-Version, Content-Length, Content-MD5, Content-Type, Date, X-Api-Version' },
+          {
+            key: 'Access-Control-Allow-Origin',
+            value: '*',
+          },
+          {
+            key: 'Access-Control-Allow-Methods',
+            value: 'GET, POST, PUT, DELETE, OPTIONS',
+          },
+          {
+            key: 'Access-Control-Allow-Headers',
+            value: 'Content-Type, Authorization, X-Requested-With',
+          },
         ],
       },
     ];
