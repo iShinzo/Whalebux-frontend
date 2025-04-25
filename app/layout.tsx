@@ -4,7 +4,6 @@ import { SidebarProvider, Sidebar, useSidebar, MobileSidebar } from "../componen
 import { SidebarNav } from "@/components/ui/sidebar-nav";
 import { useIsMobile } from "../hooks/use-mobile";
 import "../styles/globals.css";
-import { ClientHeader } from "../components/ui/ClientHeader";
 
 const navItems = [
   { name: "Dashboard", href: "/", icon: "🏠" },
@@ -42,7 +41,6 @@ export default function RootLayout({
           {/* Responsive main container for 9:16 aspect ratio on mobile */}
           <main className="flex-1 flex justify-center items-center min-h-screen bg-black px-2 py-4 overflow-y-auto w-full max-w-full overflow-x-hidden">
             <div className="w-full h-full max-w-[430px] aspect-[9/16] bg-black rounded-lg shadow-lg flex flex-col">
-              <ClientHeader />
               <div className="flex-1 flex flex-col min-h-0">
                 {children}
               </div>

@@ -4,6 +4,7 @@ import { useEffect, useState } from "react";
 import { useTelegramWebApp } from "../lib/telegram-init";
 import { Dashboard } from "../components/dashboard/dashboard";
 import Script from "next/script";
+import { ClientHeader } from "../components/ui/ClientHeader";
 
 export default function Home() {
   const { webApp, user, loading, error } = useTelegramWebApp();
@@ -61,5 +62,10 @@ export default function Home() {
   }
 
   // Render the Dashboard if Telegram WebApp is detected
-  return <Dashboard />;
+  return (
+    <>
+      <ClientHeader />
+      <Dashboard />
+    </>
+  );
 }
