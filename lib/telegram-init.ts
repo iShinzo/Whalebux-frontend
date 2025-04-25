@@ -1,9 +1,6 @@
-"use client";
+import { useState, useEffect } from 'react';
+import { userApi } from './api-service';
 
-import { useEffect, useState } from "react";
-import { userApi } from "./api-service";
-
-// Define the Telegram WebApp interface (local to this file)
 interface TelegramWebApp {
   ready: () => void;
   expand: () => void;
@@ -14,15 +11,9 @@ interface TelegramWebApp {
       username?: string;
       first_name?: string;
       last_name?: string;
+      photo_url?: string;
     };
   };
-}
-
-interface TelegramUser {
-  id: number;
-  username?: string;
-  first_name?: string;
-  last_name?: string;
 }
 
 interface UserData {
@@ -31,6 +22,7 @@ interface UserData {
   username?: string;
   firstName?: string;
   lastName?: string;
+  photoUrl?: string;
   wbuxBalance?: number;
   level?: number;
   referralCode?: string;
@@ -52,27 +44,27 @@ export function useTelegramWebApp(): TelegramWebAppHook {
   const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
-    if (typeof window === "undefined") {
+    if (typeof window === 'undefined') {
       setLoading(false);
-      setError("This hook must run in a browser environment.");
+      setError('This hook must run in a browser environment.');
       return;
     }
 
     // Check if we're in a Telegram WebApp environment
     if (!window.Telegram?.WebApp) {
-      console.log("Not running in Telegram WebApp environment");
+      console.log('Not running in Telegram WebApp environment');
       setLoading(false);
-      setError("Please open this app through Telegram.");
+      setError('Please open this app through Telegram.');
       return;
     }
 
     const initTelegram = async () => {
       try {
-        console.log("Initializing Telegram WebApp...");
+        console.log('Initializing Telegram WebApp...');
 
         const telegramWebApp = window.Telegram?.WebApp as TelegramWebApp;
         if (!telegramWebApp) {
-          throw new Error("Telegram WebApp not found");
+          throw new Error('Telegram WebApp not found');
         }
 
         // Initialize Telegram WebApp
@@ -84,48 +76,50 @@ export function useTelegramWebApp(): TelegramWebAppHook {
         const telegramUser = initData?.user;
 
         if (!telegramUser) {
-          console.log("No Telegram user data found.");
-          setError("No Telegram user data available.");
+          console.log('No Telegram user data found.');
+          setError('No Telegram user data available.');
           return;
         }
 
         const telegramId = telegramUser.id;
-        console.log("Telegram user data:", telegramUser);
+        console.log('Telegram user data:', telegramUser);
 
         try {
           // Fetch user data from API
           const userData = await userApi.getUserData(telegramId);
-          console.log("User data fetched from API:", userData);
+          console.log('User data fetched from API:', userData);
           setUser({
             userId: userData.userId,
             telegramId: userData.telegramId ?? telegramId,
             username: userData.username,
             firstName: userData.firstName,
             lastName: userData.lastName,
+            photoUrl: telegramUser.photo_url,
           });
         } catch (fetchError) {
-          console.error("Error fetching user data:", fetchError);
+          console.error('Error fetching user data:', fetchError);
 
           // Handle 404 (user not found) by creating a new user
-          if (fetchError instanceof Error && fetchError.message.includes("404")) {
-            console.log("User not found in database, creating new user...");
+          if (fetchError instanceof Error && fetchError.message.includes('404')) {
+            console.log('User not found in database, creating new user...');
             try {
               const newUser = await userApi.createUser({
                 telegramId,
                 username: telegramUser.username || `user_${telegramId}`,
-                firstName: telegramUser.first_name || "",
-                lastName: telegramUser.last_name || "",
+                firstName: telegramUser.first_name || '',
+                lastName: telegramUser.last_name || '',
               });
-              console.log("New user created successfully:", newUser);
+              console.log('New user created successfully:', newUser);
               setUser({
                 userId: newUser.userId,
                 telegramId: newUser.telegramId ?? telegramId,
                 username: newUser.username,
                 firstName: newUser.firstName,
                 lastName: newUser.lastName,
+                photoUrl: telegramUser.photo_url,
               });
             } catch (createError) {
-              console.error("Error creating new user:", createError);
+              console.error('Error creating new user:', createError);
               setError(
                 `Failed to create user: ${
                   createError instanceof Error ? createError.message : String(createError)
@@ -143,7 +137,7 @@ export function useTelegramWebApp(): TelegramWebAppHook {
 
         setWebApp(telegramWebApp);
       } catch (err) {
-        console.error("Error initializing Telegram WebApp:", err);
+        console.error('Error initializing Telegram WebApp:', err);
         setError(
           `Error initializing Telegram WebApp: ${
             err instanceof Error ? err.message : String(err)
@@ -158,7 +152,7 @@ export function useTelegramWebApp(): TelegramWebAppHook {
   }, []);
 
   useEffect(() => {
-    if (user && typeof window !== "undefined") {
+    if (user && typeof window !== 'undefined') {
       // Update the Zustand user store with backend/Telegram data
       const {
         userId,
@@ -166,6 +160,7 @@ export function useTelegramWebApp(): TelegramWebAppHook {
         username,
         firstName,
         lastName,
+        photoUrl,
         wbuxBalance = 100.0,
         level = 1,
         referralCode = `REF_${user.telegramId}`,
@@ -174,13 +169,14 @@ export function useTelegramWebApp(): TelegramWebAppHook {
       } = user;
 
       // Use dynamic import for the store to avoid circular dependencies
-      import("./stores/userStore").then(({ useUserStore }) => {
+      import('./stores/userStore').then(({ useUserStore }) => {
         useUserStore.setState({
           userId,
           telegramId,
           username,
           firstName,
           lastName,
+          photoUrl,
           wbuxBalance,
           level,
           referralCode,
@@ -192,4 +188,4 @@ export function useTelegramWebApp(): TelegramWebAppHook {
   }, [user]);
 
   return { webApp, user, loading, error };
-}
+} 

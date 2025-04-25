@@ -4,6 +4,7 @@ import Link from "next/link";
 import { SidebarProvider, Sidebar, useSidebar, MobileSidebar } from "../components/ui/sidebar";
 import { SidebarNav } from "@/components/ui/sidebar-nav";
 import { useIsMobile } from "../hooks/use-mobile";
+import { useTelegramWebApp } from "../lib/telegram-init";
 import "../styles/globals.css";
 
 const navItems = [
@@ -27,6 +28,8 @@ export default function RootLayout({
 }: {
   children: React.ReactNode;
 }) {
+  const { user } = useTelegramWebApp();
+
   return (
     <html lang="en" suppressHydrationWarning>
       <body className="min-h-screen bg-black text-white flex">
@@ -44,10 +47,20 @@ export default function RootLayout({
             <div className="w-full h-full max-w-[430px] aspect-[9/16] bg-black rounded-lg shadow-lg flex flex-col">
               <header className="flex items-center justify-between mb-8">
                 <h1 className="text-3xl font-bold tracking-wide">WhaleBux Mining App</h1>
-                <div className="flex items-center space-x-4">
-                  <img src="/placeholder-user.jpg" alt="User" className="h-10 w-10 rounded-full border-2 border-gray-700" />
-                  <span className="text-lg font-semibold">User</span>
-                </div>
+                {user && (
+                  <div className="flex items-center space-x-4">
+                    {user.photoUrl && (
+                      <img 
+                        src={user.photoUrl} 
+                        alt={`${user.firstName} ${user.lastName}`} 
+                        className="h-10 w-10 rounded-full border-2 border-gray-700" 
+                      />
+                    )}
+                    <span className="text-lg font-semibold">
+                      {user.firstName} {user.lastName}
+                    </span>
+                  </div>
+                )}
               </header>
               <div className="flex-1 flex flex-col min-h-0">
                 {children}
