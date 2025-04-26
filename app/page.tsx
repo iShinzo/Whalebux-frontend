@@ -3,7 +3,6 @@
 import { useEffect, useState } from "react";
 import { useTelegramWebApp } from "../lib/telegram-init";
 import { Dashboard } from "../components/dashboard/dashboard";
-import Script from "next/script";
 
 export default function Home() {
   const { webApp, user, loading, error } = useTelegramWebApp();
@@ -79,36 +78,12 @@ export default function Home() {
     );
   }
 
-  // Show Telegram login widget if not in Telegram WebApp, not forceLoad, and not already logged in
+  // Show message if not in Telegram WebApp, not forceLoad, and not already logged in
   if (!webApp && !forceLoad && !telegramUser) {
     return (
       <div className="flex flex-col items-center justify-center min-h-screen p-4">
         <h1 className="text-3xl font-bold text-white mb-4">WhaleBux</h1>
-        <p className="text-white mb-4">Login with Telegram to continue.</p>
-        <div id="telegram-login-widget" className="mb-4"></div>
-        <Script
-          src="https://telegram.org/js/telegram-widget.js?22"
-          strategy="afterInteractive"
-          onReady={() => {
-            // @ts-ignore
-            window.onTelegramAuth = onTelegramAuth;
-          }}
-        />
-        <Script id="telegram-login-callback" strategy="afterInteractive">
-          {`
-            if (!document.getElementById('telegram-login-script')) {
-              var script = document.createElement('script');
-              script.id = 'telegram-login-script';
-              script.async = true;
-              script.src = 'https://telegram.org/js/telegram-widget.js?22';
-              script.setAttribute('data-telegram-login', 'ReferralHelperBot');
-              script.setAttribute('data-size', 'large');
-              script.setAttribute('data-onauth', 'onTelegramAuth(user)');
-              script.setAttribute('data-request-access', 'write');
-              document.getElementById('telegram-login-widget').appendChild(script);
-            }
-          `}
-        </Script>
+        <p className="text-white mb-4">This app is designed to run inside Telegram.</p>
       </div>
     );
   }
@@ -119,18 +94,6 @@ export default function Home() {
       <div className="flex flex-col items-center justify-center min-h-screen p-4">
         <h1 className="text-3xl font-bold text-white mb-4">WhaleBux</h1>
         <p className="text-white mb-4">This app is designed to run inside Telegram.</p>
-        <p className="text-white mb-4">Please open it from your Telegram bot.</p>
-
-        {/* For development/testing, add a button to load the app */}
-        <button
-          className="mt-4 px-4 py-2 bg-blue-600 text-white rounded-lg"
-          onClick={() => {
-            // Reload the page with forceLoad=true query parameter
-            window.location.href = `${window.location.pathname}?forceLoad=true`;
-          }}
-        >
-          Load App Anyway (Development Only)
-        </button>
       </div>
     );
   }
