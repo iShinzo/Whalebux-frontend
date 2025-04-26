@@ -7,7 +7,9 @@ export default function Document() {
         {/* Add favicon */}
         <link rel="icon" type="image/png" href="/placeholder-logo.png" />
         {/* Telegram WebApp script */}
-        <script src="https://telegram.org/js/telegram-web-app.js?57"></script>
+        <script src="https://telegram.org/js/telegram-web-app.js" />
+        {/* Vercel Live Feedback script allow (optional for dev) */}
+        {/* <script src="https://vercel.live/_next-live/feedback/feedback.js" /> */}
       </Head>
       <body>
         <Main />

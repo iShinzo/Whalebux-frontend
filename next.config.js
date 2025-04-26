@@ -13,16 +13,14 @@ const nextConfig = {
           {
             key: 'Content-Security-Policy',
             value: `
-              default-src 'self' https://telegram.org https://*.telegram.org https://t.me;
-              script-src 'self' 'unsafe-inline' https://telegram.org https://*.telegram.org https://t.me;
+              default-src 'self' https://telegram.org https://*.telegram.org https://t.me https://vercel.live;
+              script-src 'self' 'unsafe-inline' https://telegram.org https://*.telegram.org https://t.me https://vercel.live;
               style-src 'self' 'unsafe-inline' https://telegram.org https://*.telegram.org https://t.me;
               img-src 'self' data: https://*.telegram.org https://t.me;
               connect-src 'self' https://whalebux-vercel.onrender.com https://*.telegram.org https://api.telegram.org;
-              font-src 'self' https://*.telegram.org;
-              object-src 'none';
               frame-src 'self' https://*.telegram.org https://t.me;
               frame-ancestors 'self' https://*.telegram.org https://t.me;
-              worker-src 'self' blob:;
+              object-src 'none';
             `.replace(/\s{2,}/g, ' ').trim(),
           },
           {
