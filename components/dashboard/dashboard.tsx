@@ -172,24 +172,6 @@ export const Dashboard = () => {
           If you see this message in Telegram, try closing and reopening the app.<br />
           <span className="block mt-2">{error || "Could not authenticate with Telegram. Please try again."}</span>
         </p>
-        <button
-          className="bg-blue-600 hover:bg-blue-500 text-white px-4 py-2 rounded mb-4"
-          onClick={() => window.location.reload()}
-        >
-          Retry Detection
-        </button>
-        <div className="card p-4 w-full max-w-md mb-4">
-          <h2 className="text-xl font-bold text-foreground mb-2">Debug Information</h2>
-          <p className="text-muted-foreground text-sm">
-            API URL: {process.env.NEXT_PUBLIC_API_URL || "Not set"}
-          </p>
-          <p className="text-muted-foreground text-sm">
-            Environment: {process.env.NODE_ENV}
-          </p>
-          <p className="text-muted-foreground text-sm">
-            Telegram WebApp: {webApp ? "Available" : "Not Available"}
-          </p>
-        </div>
       </div>
     );
   }
