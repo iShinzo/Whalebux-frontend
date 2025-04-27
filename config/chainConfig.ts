@@ -11,6 +11,14 @@ export interface ChainConfig {
   isTestnet: boolean
 }
 
+// Swap configuration
+export const swapConfig = {
+  minSwapAmount: 10000, // 10,000 WhaleBux Dollars
+  maxSwapAmount: 100000, // Add this property for compatibility
+  dailyLimit: 100000,   // Example: 100,000 WhaleBux Dollars per day
+  rate: 0.000025,       // 10,000 WhaleBux Dollars = 0.25 WBUX Tokens => 1 Dollar = 0.000025 WBUX
+};
+
 // Chain configurations
 export const chains: Record<string, ChainConfig> = {
   BSC: {

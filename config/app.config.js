@@ -1,4 +1,4 @@
-const isDev = process.env.NODE_ENV === 'development';
+const isDev = process.env.NODE_ENV === 'production';
 
 export const APP_CONFIG = {
   // API URLs
@@ -27,7 +27,7 @@ export const APP_CONFIG = {
   // App settings
   app: {
     name: 'WhaleBux',
-    version: '1.0.0',
+    version: 'v1.0.0-alpha',
     description: 'WhaleBux Telegram Mini App',
     theme: {
       primary: '#3B82F6',
