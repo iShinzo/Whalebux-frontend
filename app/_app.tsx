@@ -1,23 +1,23 @@
-import { useEffect } from "react";
+import { useTelegramWebApp } from "../hooks/useTelegramWebApp";
 import "../styles/globals.css";
 
 export default function App({ Component, pageProps }: { Component: any; pageProps: any }) {
-  useEffect(() => {
-    // Debug: Log Telegram context at React app runtime
-    console.log("APP DEBUG: window.Telegram =", window.Telegram);
-    console.log("APP DEBUG: window.Telegram.WebApp =", window.Telegram?.WebApp);
-    console.log("APP DEBUG: window.location.href =", window.location.href);
+  const tg = useTelegramWebApp();
 
-    // Check if Telegram WebApp is available
-    if (typeof window !== "undefined" && window.Telegram?.WebApp) {
-      const tg = window.Telegram.WebApp;
-      tg.ready(); // Notify Telegram that the WebApp is ready
-      console.log("Telegram WebApp initialized");
-      console.log("Init Data:", tg.initData); // Access Telegram WebApp data here
-    } else {
-      console.error("Not running inside Telegram WebApp!");
-    }
-  }, []);
-
-  return <Component {...pageProps} />;
+  return (
+    <>
+      {/* Telegram Debug Info (remove or hide in production) */}
+      {!tg ? (
+        <div style={{ color: 'red', padding: 8 }}>Not running inside Telegram WebApp.</div>
+      ) : (
+        <div style={{ color: 'green', padding: 8 }}>
+          Telegram Context Detected!<br />
+          <pre style={{ color: 'inherit', background: '#222', padding: 8, borderRadius: 6 }}>
+            {JSON.stringify(tg.initDataUnsafe?.user, null, 2)}
+          </pre>
+        </div>
+      )}
+      <Component {...pageProps} />
+    </>
+  );
 }
