@@ -11,7 +11,6 @@ export default function Home() {
   const [isClient, setIsClient] = useState(false);
 
   useEffect(() => {
-    // Mark as rendered on the client
     setIsClient(true);
 
     console.log("Page component mounted");
@@ -29,6 +28,11 @@ export default function Home() {
   }, []);
 
   // Handle loading state for server-side rendering or Telegram WebApp
+    if (typeof window !== "undefined" && window.Telegram?.WebApp) {
+      window.Telegram.WebApp.ready();
+    }
+  }, []);
+  
   if (!isClient || loading) {
     return (
       <div className="flex items-center justify-center min-h-screen">
@@ -37,7 +41,6 @@ export default function Home() {
     );
   }
 
-  // Show error if Telegram WebApp is not detected or hook returns error
   if (error) {
     return (
       <div className="flex flex-col items-center justify-center min-h-screen p-4 bg-background">
@@ -50,7 +53,8 @@ export default function Home() {
     );
   }
 
-  // Show message if not in Telegram WebApp
+
+  // Only allow running inside Telegram WebApp
   if (!webApp) {
     return (
       <div className="flex flex-col items-center justify-center min-h-screen p-4">
@@ -68,4 +72,7 @@ export default function Home() {
       <Dashboard />
     </>
   );
+}
+  // If everything is good, render your dashboard/app
+  return <Dashboard />;
 }
