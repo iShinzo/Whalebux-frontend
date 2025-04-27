@@ -1,10 +1,11 @@
 import { useEffect, useState } from "react";
 
-interface TelegramWebApp {
-  initData: string;
-  initDataUnsafe: any;
-  // Add more properties as needed from Telegram WebApp API
+// Use typeof only if window.Telegram and window.Telegram.WebApp are defined
+let tgType: any = undefined;
+if (typeof window !== "undefined" && window.Telegram && window.Telegram.WebApp) {
+  tgType = window.Telegram.WebApp;
 }
+type TelegramWebApp = typeof tgType;
 
 export function useTelegramWebApp() {
   const [webApp, setWebApp] = useState<TelegramWebApp | null>(null);
