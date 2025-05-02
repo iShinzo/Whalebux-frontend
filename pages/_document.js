@@ -6,8 +6,8 @@ export default function Document() {
       <Head>
         {/* Add favicon */}
         <link rel="icon" type="image/png" href="/placeholder-logo.png" />
-        {/* Telegram WebApp script */}
-        <script src="https://telegram.org/js/telegram-web-app.js?57"></script>
+        {/* Telegram WebApp script - updated to latest version without version parameter */}
+        <script src="https://telegram.org/js/telegram-web-app.js" nonce="telegram-webapp"></script>
       </Head>
       <body>
         <Main />

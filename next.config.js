@@ -13,21 +13,19 @@ const nextConfig = {
           {
             key: 'Content-Security-Policy',
             value: `
-              default-src 'self' https://telegram.org https://*.telegram.org https://t.me;
-              script-src 'self' 'unsafe-inline' https://telegram.org https://*.telegram.org https://t.me;
-              style-src 'self' 'unsafe-inline' https://telegram.org https://*.telegram.org https://t.me;
-              img-src 'self' data: https://*.telegram.org https://t.me;
-              connect-src 'self' https://whalebux-vercel.onrender.com https://*.telegram.org https://api.telegram.org;
-              font-src 'self' https://*.telegram.org;
-              object-src 'none';
-              frame-src 'self' https://*.telegram.org https://t.me;
-              frame-ancestors 'self' https://*.telegram.org https://t.me;
+              default-src * 'self' data: blob: 'unsafe-inline' 'unsafe-eval';
+              script-src * 'self' data: blob: 'unsafe-inline' 'unsafe-eval' https://telegram.org https://*.telegram.org;
+              connect-src * 'self' data: blob: 'unsafe-inline' https://whalebux-vercel.onrender.com https://*.telegram.org https://api.telegram.org;
+              img-src * 'self' data: blob: https://*.telegram.org https://t.me;
+              frame-src * 'self' data: blob: https://*.telegram.org https://t.me;
+              style-src * 'self' data: blob: 'unsafe-inline';
+              font-src * 'self' data: blob: https://*.telegram.org;
               worker-src 'self' blob:;
             `.replace(/\s{2,}/g, ' ').trim(),
           },
           {
             key: 'Access-Control-Allow-Origin',
-            value: 'https://whalebux-vercel.onrender.com',
+            value: '*',
           },
           {
             key: 'Access-Control-Allow-Methods',
@@ -48,7 +46,7 @@ const nextConfig = {
           },
           {
             key: 'X-Frame-Options',
-            value: 'DENY',
+            value: 'SAMEORIGIN',
           },
           {
             key: 'X-XSS-Protection',

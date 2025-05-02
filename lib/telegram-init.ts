@@ -50,13 +50,32 @@ export function useTelegramWebApp(): TelegramWebAppHook {
       return;
     }
 
-    // Check if we're in a Telegram WebApp environment
-    if (!window.Telegram?.WebApp) {
-      console.log('Not running in Telegram WebApp environment');
-      setLoading(false);
-      setError('Please open this app through Telegram.');
-      return;
-    }
+    let retryCount = 0;
+    const maxRetries = 5;
+    const retryDelay = 500; // ms
+
+    const checkTelegramWebApp = () => {
+      console.log(`Checking for Telegram WebApp (attempt ${retryCount + 1}/${maxRetries})...`);
+
+      // Check if we're in a Telegram WebApp environment
+      if (window.Telegram?.WebApp) {
+        console.log('Telegram WebApp detected, initializing...');
+        initTelegram();
+      } else if (retryCount < maxRetries - 1) {
+        // Retry with increasing delay
+        retryCount++;
+        console.log(`Telegram WebApp not found, retrying in ${retryDelay * retryCount}ms...`);
+        setTimeout(checkTelegramWebApp, retryDelay * retryCount);
+      } else {
+        // Give up after max retries
+        console.error('Not running in Telegram WebApp environment after multiple attempts');
+        setLoading(false);
+        setError('Please open this app through Telegram.');
+      }
+    };
+
+    // Start checking for Telegram WebApp
+    checkTelegramWebApp();
 
     const initTelegram = async () => {
       try {
@@ -188,4 +207,4 @@ export function useTelegramWebApp(): TelegramWebAppHook {
   }, [user]);
 
   return { webApp, user, loading, error };
-} 
+}

@@ -18,14 +18,32 @@ export default function Home() {
     console.log("Environment:", process.env.NODE_ENV);
     console.log("API URL:", process.env.NEXT_PUBLIC_API_URL);
 
-    if (typeof window !== "undefined") {
-      if (window.Telegram?.WebApp) {
-        console.log("Running inside Telegram WebApp");
-        window.Telegram.WebApp.ready(); // Signal the Telegram WebApp is ready
-      } else {
-        console.log("Not running inside Telegram WebApp");
+    // Check for Telegram WebApp with retry mechanism
+    let retryCount = 0;
+    const maxRetries = 5;
+
+    const checkTelegramWebApp = () => {
+      if (typeof window !== "undefined") {
+        if (window.Telegram?.WebApp) {
+          console.log("Running inside Telegram WebApp");
+          try {
+            window.Telegram.WebApp.ready(); // Signal the Telegram WebApp is ready
+            window.Telegram.WebApp.expand(); // Expand the WebApp to full height
+            console.log("Telegram WebApp initialized successfully");
+          } catch (error) {
+            console.error("Error initializing Telegram WebApp:", error);
+          }
+        } else if (retryCount < maxRetries) {
+          console.log(`Not running inside Telegram WebApp (attempt ${retryCount + 1}/${maxRetries})`);
+          retryCount++;
+          setTimeout(checkTelegramWebApp, 500 * retryCount);
+        } else {
+          console.error("Telegram WebApp not detected after multiple attempts");
+        }
       }
-    }
+    };
+
+    checkTelegramWebApp();
   }, []);
 
   // Handle loading state for server-side rendering or Telegram WebApp
@@ -57,6 +75,15 @@ export default function Home() {
         <h1 className="text-3xl font-bold text-white mb-4">WhaleBux</h1>
         <p className="text-white mb-4">This app is designed to run inside Telegram.</p>
         <p className="text-white mb-4">Please open it from your Telegram bot.</p>
+        <div className="mt-4 p-4 bg-gray-800 rounded-lg">
+          <p className="text-yellow-400 font-semibold mb-2">Troubleshooting:</p>
+          <ul className="text-gray-300 list-disc pl-5 space-y-1">
+            <li>Make sure you're opening this app from the Telegram bot</li>
+            <li>Try using the /test command in the bot for a diagnostic test</li>
+            <li>Check if JavaScript is enabled in your browser</li>
+            <li>Try clearing your browser cache</li>
+          </ul>
+        </div>
       </div>
     );
   }
