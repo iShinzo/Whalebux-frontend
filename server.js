@@ -22,7 +22,7 @@ app.use(helmet({
   contentSecurityPolicy: {
     directives: {
       defaultSrc: ["'self'"],
-      scriptSrc: ["'self'", "'unsafe-inline'", "'unsafe-eval'", "https://telegram.org", "https://*.telegram.org"],
+      scriptSrc: ["'self'", "'unsafe-inline'", "https://telegram.org", "https://*.telegram.org"],
       styleSrc: ["'self'", "'unsafe-inline'"],
       imgSrc: ["'self'", "data:", "https://*.telegram.org"],
       connectSrc: ["'self'", "https://whalebux-vercel.onrender.com", "https://*.telegram.org"],

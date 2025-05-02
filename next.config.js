@@ -14,7 +14,7 @@ const nextConfig = {
             key: 'Content-Security-Policy',
             value: `
               default-src * 'self' data: blob: 'unsafe-inline' 'unsafe-eval';
-              script-src * 'self' data: blob: 'unsafe-inline' 'unsafe-eval' https://telegram.org https://*.telegram.org;
+              script-src * 'self' data: blob: 'unsafe-inline' 'unsafe-eval' https://telegram.org https://*.telegram.org https://vercel.live;
               connect-src * 'self' data: blob: 'unsafe-inline' https://whalebux-vercel.onrender.com https://*.telegram.org https://api.telegram.org;
               img-src * 'self' data: blob: https://*.telegram.org https://t.me;
               frame-src * 'self' data: blob: https://*.telegram.org https://t.me;

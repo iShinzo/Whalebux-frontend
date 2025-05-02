@@ -1,13 +1,9 @@
 "use client";
-
+import { useTelegramWebApp } from "../hooks/useTelegramWebApp";
 import { useEffect, useState } from "react";
-import { useTelegramWebApp } from "../lib/telegram-init";
-import { Dashboard } from "../components/dashboard/dashboard";
-import Script from "next/script";
-import { ClientHeader } from "../components/ui/ClientHeader";
 
 export default function Home() {
-  const { webApp, user, loading, error } = useTelegramWebApp();
+  const tg = useTelegramWebApp();
   const [isClient, setIsClient] = useState(false);
 
   useEffect(() => {
@@ -46,8 +42,8 @@ export default function Home() {
     checkTelegramWebApp();
   }, []);
 
-  // Handle loading state for server-side rendering or Telegram WebApp
-  if (!isClient || loading) {
+  // Handle loading state for server-side rendering
+  if (!isClient) {
     return (
       <div className="flex items-center justify-center min-h-screen">
         <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-blue-500"></div>
@@ -55,44 +51,38 @@ export default function Home() {
     );
   }
 
-  // Show error if Telegram WebApp is not detected or hook returns error
-  if (error) {
+  if (!tg)
     return (
-      <div className="flex flex-col items-center justify-center min-h-screen p-4 bg-background">
-        <h1 className="text-3xl font-bold text-foreground mb-4">Error</h1>
-        <p className="text-muted-foreground mb-4 text-center">{error}</p>
-        <p className="text-muted-foreground mt-2 text-center">
-          Please ensure this app is opened via your Telegram bot's WebApp link or button.
-        </p>
+      <div style={{ color: "red", padding: 16 }}>
+        Error: Not running inside Telegram WebApp.<br />
+        Please open this app using your Telegram bot’s WebApp button.
+      </div>
+    );
+
+  const user = tg.initDataUnsafe?.user;
+
+  // Add troubleshooting information to the error message
+  if (!user) {
+    return (
+      <div style={{ color: "orange", padding: 16 }}>
+        <h3>Telegram WebApp detected, but no user data found</h3>
+        <p>This could happen if:</p>
+        <ul style={{ marginLeft: 20 }}>
+          <li>The app wasn't launched properly from Telegram</li>
+          <li>There's an issue with Telegram authentication</li>
+          <li>Try using the /test command in the bot for diagnostics</li>
+        </ul>
       </div>
     );
   }
 
-  // Show message if not in Telegram WebApp
-  if (!webApp) {
-    return (
-      <div className="flex flex-col items-center justify-center min-h-screen p-4">
-        <h1 className="text-3xl font-bold text-white mb-4">WhaleBux</h1>
-        <p className="text-white mb-4">This app is designed to run inside Telegram.</p>
-        <p className="text-white mb-4">Please open it from your Telegram bot.</p>
-        <div className="mt-4 p-4 bg-gray-800 rounded-lg">
-          <p className="text-yellow-400 font-semibold mb-2">Troubleshooting:</p>
-          <ul className="text-gray-300 list-disc pl-5 space-y-1">
-            <li>Make sure you're opening this app from the Telegram bot</li>
-            <li>Try using the /test command in the bot for a diagnostic test</li>
-            <li>Check if JavaScript is enabled in your browser</li>
-            <li>Try clearing your browser cache</li>
-          </ul>
-        </div>
-      </div>
-    );
-  }
-
-  // Render the Dashboard if Telegram WebApp is detected
+  // Render the main content if everything is working
   return (
-    <>
-      <ClientHeader />
-      <Dashboard />
-    </>
+    <div style={{ color: "green", padding: 16 }}>
+      Telegram context detected!<br />
+      {user
+        ? `Welcome, ${user.first_name || user.username || "user"}!`
+        : "No user info found in Telegram context."}
+    </div>
   );
 }

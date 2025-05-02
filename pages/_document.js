@@ -1,13 +1,14 @@
 import { Html, Head, Main, NextScript } from 'next/document';
+import Script from 'next/script';
 
 export default function Document() {
   return (
     <Html>
       <Head>
-        {/* Add favicon */}
+        {/* Favicon */}
         <link rel="icon" type="image/png" href="/placeholder-logo.png" />
-        {/* Telegram WebApp script - updated to latest version without version parameter */}
-        <script src="https://telegram.org/js/telegram-web-app.js" nonce="telegram-webapp"></script>
+        {/* Telegram WebApp JS SDK - using next/script for better loading strategy */}
+        <Script src="https://telegram.org/js/telegram-web-app.js" strategy="beforeInteractive" nonce="telegram-webapp" />
       </Head>
       <body>
         <Main />
